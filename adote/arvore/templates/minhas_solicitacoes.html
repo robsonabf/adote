@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Minhas Solicitações{% endblock %}
+
+{% block content %}
+    <h2>Minhas Solicitações</h2>
+    
+    <ul>
+        <h3>Solicitações Pendentes</h3>
+        {% for solicitacao in solicitacoes %}
+                {% if solicitacao.status == 'Pendente' %}
+                <li>
+                {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
+                - Status: {{ solicitacao.status }} - Espécie: {{ solicitacao.especie }}
+                </li>
+                {% endif %}
+        {% endfor %}
+        <h3>Solicitações Aprovadas</h3>
+        {% for efetivada in efetivadas %}
+            {% if efetivada.solicitacao.status == 'Aprovada' %}
+            <li>
+                {{ efetivada.solicitacao.usuario.username }} solicitou {{ efetivada.solicitacao.quantidade_solicitada }} mudas
+                - Status: {{ efetivada.solicitacao.status }}
+                - Quantidade efetivada: {{ efetivada.quantidade_efetivada }}
+                - Espécie doada: {{ efetivada.especie_doada }}
+                - Local de Plantio: {{ efetivada.solicitacao.local_de_plantio }}
+            </li>
+            {% endif %}
+        {% endfor %}
+        <h3>Solicitações Reprovadas</h3>
+        {% for solicitacao in solicitacoes %}
+            {% for efetivada in efetivadas %}
+                {% if solicitacao.status == 'Reprovada' %}
+            <li>
+                    {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
+                    - Status: {{ solicitacao.status }} - Observações: {{ efetivada.observacoes }}
+            </li>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </ul>
+
+{% endblock %}

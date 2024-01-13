@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Aprovar/Reprovar Doação{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2>Aprovar/Reprovar Doação</h2>
+        <p><strong>Solicitado por:</strong> {{ solicitacao.usuario.username }}</p>
+        <p><strong>Telefone de Contato:</strong> {{ solicitacao.usuario.userprofile.telefone }}</p>
+        <p><strong>Espécie solicitada:</strong> {{ solicitacao.especie }}</p>
+        <p><strong>Quantidade solicitada:</strong> {{ solicitacao.quantidade_solicitada }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="quantidade_efetivada">Quantidade Efetivada:</label>
+                <input type="number" name="quantidade_efetivada" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="observacoes">Observações:</label>
+                <input type="text" name="observacoes" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" name="aprovar" class="btn btn-success">Aprovar</button>
+                <button type="submit" name="reprovar" class="btn btn-danger">Reprovar</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

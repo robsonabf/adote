@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro{% endblock %}
+
+{% block content %}
+  <div class="container mt-6">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2 class="text-center mb-1">Cadastro</h2>
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group mb-1">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.nome_completo.label_tag }}
+            {{ form.nome_completo }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.endereco.label_tag }}
+            {{ form.endereco }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.telefone.label_tag }}
+            {{ form.telefone }}
+          </div>
+          <div class="form-group mb-1">
+            {{ form.cpf.label_tag }}
+            {{ form.cpf }}
+          </div>
+          <button type="submit" class="btn btn-success btn-block mb-4">Cadastrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

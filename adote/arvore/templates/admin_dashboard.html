@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel Administrativo{% endblock %}
+
+{% block content %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dados_estatisticos = {{ dados_estatisticos|safe }};
+        const ctxPorAno = document.getElementById('graficoPorAno').getContext('2d');
+        const ctxPorEspecie = document.getElementById('graficoPorEspecie').getContext('2d');
+        const ctx = document.getElementById('graficoPorTipoSolicitacao').getContext('2d');
+        const ctxespecieSolicita = document.getElementById('graficoPorEspecieSolicitacao').getContext('2d');
+
+        console.log(dados_estatisticos);
+
+        // Gráfico Por Ano
+        new Chart(ctxPorAno, {
+            type: 'bar',
+            data: {
+                labels: dados_estatisticos.por_ano.map(item => item.ano),
+                datasets: [{
+                    label: 'Quantidade de Mudas Doadas Por Ano',
+                    data: dados_estatisticos.por_ano.map(item => item.count),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+        });
+
+        // Gráfico Por Espécie
+        new Chart(ctxPorEspecie, {
+            type: 'pie',
+            data: {
+                labels: dados_estatisticos.por_especie.map(item => item.especie_doada),
+                datasets: [{
+                    data: dados_estatisticos.por_especie.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1,
+                    }],
+                },
+            });
+            // Gráfico de Solicitações Status
+            new Chart(ctx, {
+            type: 'pie',  // Use 'bar' para um gráfico de barras
+            data: {
+                labels: dados_estatisticos.por_tipo_solicitacao.map(item => item.status),
+                datasets: [{
+                    label: 'Quantidade de Mudas Solicitadas Por Tipo',
+                    data: dados_estatisticos.por_tipo_solicitacao.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1,
+                    }],
+                },
+            });
+            // Gráfico de Solicitações de espécie
+            new Chart(ctxespecieSolicita, {
+            type: 'bar',  // Use 'bar' para um gráfico de barras
+            data: {
+                labels: dados_estatisticos.por_especie_solicitacao.map(item => item.especie),
+                datasets: [{
+                    label: 'Quantidade de Mudas Solicitadas Por Tipo',
+                    data: dados_estatisticos.por_especie_solicitacao.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1,
+                    }],
+                },
+            });
+    });
+</script>
+
+  <div class="container mt-5">
+    <h2>Painel Administrativo</h2>
+    <p>Bem-vindo à área administrativa. Aqui você pode gerenciar as mudas, verificar as solicitações e visualizar dados coletados.</p>
+     <ul class="navbar-nav ml-auto">
+     <li class="nav-item">
+          <a class="nav-link" href="{% url 'adicionar_muda' %}">Adicionar Muda</a>
+     </li>
+     <li>
+          <a class="nav-link" href="{% url 'listar_solicitacoes' %}">Listar Solicitações</a>
+     </li>
+     </ul>
+    <!-- Adicione mais conteúdo conforme necessário -->
+
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <h3>Quantidade de Mudas Doadas Por Tipo</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorEspecie" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Quantidade de Mudas Doadas Por Ano</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorAno" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Quantidade das Solicitações de Mudas Por Situação</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorTipoSolicitacao" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Quantidade de Solicitações de Mudas Por Tipo</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorEspecieSolicitacao" width="400" height="400"></canvas>
+      </div>
+    </div>
+  </div>
+{% endblock %}

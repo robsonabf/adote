@@ -1,0 +1,40 @@
+<!-- listar_solicitacoes.html -->
+{% extends 'base.html' %}
+
+{% block title %}Listar Solicitações de Doação{% endblock %}
+
+{% block content %}
+    <h2>Listar Solicitações de Doação</h2>
+    <ul>
+        <h3>Solicitações Pendentes</h3>
+        {% for solicitacao in solicitacoes %}
+                {% if solicitacao.status == 'Pendente' %}
+                <li>
+                {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
+                - Status: {{ solicitacao.status }}
+                - <a href="{% url 'aprovar_reprovar_doacao' solicitacao.id %}">Aprovar/Reprovar</a>
+                </li>
+                {% endif %}
+        {% endfor %}
+        <h3>Solicitações Aprovadas</h3>
+        {% for efetivada in efetivadas %}
+            {% if efetivada.solicitacao.status == 'Aprovada' %}
+            <li>
+                {{ efetivada.solicitacao.usuario.username }} solicitou {{ efetivada.solicitacao.quantidade_solicitada }} mudas
+                - Status: {{ efetivada.solicitacao.status }}
+                - Quantidade efetivada: {{ efetivada.quantidade_efetivada }}
+                - Espécie doada: {{ efetivada.especie_doada }}
+            </li>
+            {% endif %}
+        {% endfor %}
+        <h3>Solicitações Reprovadas</h3>
+        {% for solicitacao in solicitacoes %}
+                {% if solicitacao.status == 'Reprovada' %}
+            <li>
+                    {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
+                    - Status: {{ solicitacao.status }} - Status: {{ solicitacao.observacoes }}
+            </li>
+                {% endif %}
+        {% endfor %}
+    </ul>
+{% endblock %}

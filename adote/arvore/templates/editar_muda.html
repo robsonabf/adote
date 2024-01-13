@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Muda{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Muda</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.nome.id_for_label }}">Nome:</label>
+            {{ form.nome }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.especie.id_for_label }}">Espécie:</label>
+            {{ form.especie }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.descricao.id_for_label }}">Descrição:</label>
+            {{ form.descricao }}
+        </div>
+        <button type="submit" class="btn btn-primary mb-4">Salvar alterações</button>
+    </form>
+    <a href="{% url 'lista_mudas' %}" class="btn btn-secondary mb-4">Cancelar</a>
+</div>
+{% endblock %}

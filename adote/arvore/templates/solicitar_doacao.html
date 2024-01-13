@@ -1,0 +1,24 @@
+<!-- solicitar_doacao.html -->
+{% extends 'base.html' %}
+
+{% block title %}Solicitar Doação{% endblock %}
+
+{% block content %}
+    <h2>Solicitar Doação</h2>
+    <form method="post" action="{% url 'solicitar_doacao' %}">
+        {% csrf_token %}
+        <div class="form-group">
+        {{ form.especie.label_tag }}
+        {{ form.especie }}
+    </div>
+    <div class="form-group">
+        {{ form.quantidade_solicitada.label_tag }}
+        {{ form.quantidade_solicitada }}
+    </div>
+    <div class="form-group">
+        {{ form.local_de_plantio.label_tag }}
+        {{ form.local_de_plantio }}
+    </div>
+    <button type="submit" class="btn btn-success mb-4">Cadastrar</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    {% load custom_filters %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Adote uma Árvore{% endblock %}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <!-- Adicione aqui seu próprio arquivo de estilo com as cores desejadas -->
+    <style>
+        body {
+            background-color: #f8f9fa; /* Tom de branco */
+            padding-top: 56px; /* Altura da barra de navegação fixa */
+        }
+
+        .navbar {
+            background-color: #28a745; /* Tom de verde */
+            color: white;
+        }
+
+        .container {
+            margin-top: 20px;
+        }
+
+        .footer {
+            background-color: #28a745; /* Tom de verde */
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        input, textarea{
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <a class="navbar-brand" href="{% url 'index' %}">Adote uma Árvore</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lista_mudas' %}">Mudas</a>
+                </li>
+            {% if not user|is_member_of_team %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'solicitar_doacao' %}">Solicitar Doação</a>
+                </li>
+                <li><a class="nav-link" href="{% url 'minhas_solicitacoes' %}">Minhas Solicitações</a></li>
+            {% endif %}
+                <li class="nav-item">
+                    <form action="{% url 'logout' %}" method="post" id="logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
+                            Sair
+                        </button>
+                    </form>
+                </li>
+
+                {% if user|is_member_of_team %}
+                    <!-- Adicione o link para o painel administrativo -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_dashboard' %}">Painel Administrativo</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}">Entrar</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'signup' %}">Cadastrar-se</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+<div class="footer">
+    <p>&copy; 2024 Sistema de Adoção de Mudas - Adote uma Árvore - Desenvolvido por Robson Almeida Borges de Freitas - Professor do IFPI - Floriano</p>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</body>
+</html>

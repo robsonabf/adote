@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Entrar{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="text-center mb-4">Entrar</h2>
+            <h6 class="text-center mb-4">Caso não possua cadastro, dirija-se para a página de cadastro.</h6>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group mb-4">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                </div>
+                <div class="form-group mb-4">
+                    {{ form.password.label_tag }}
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="btn btn-success btn-block mb-4">Entrar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
