@@ -1,3 +1,5 @@
+from itertools import groupby, chain
+
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, DoacaoAvulsoForm, EspecieQuantidadeFormSet, MudaForm, SolicitacaoDoacaoForm, \
     EspecieQuantidadeForm, DoacaoAvulsoForm2
@@ -78,30 +80,70 @@ def admin_dashboard(request):
 
 
 def obter_dados_estatisticos():
-    # Contagem por ano
-    dados_por_ano = EfetivarDoacao.objects.annotate(ano=ExtractYear('data_efetivacao')).values('ano').annotate(count=Count('ano'))
+    # Contagem por ano de doações e não de quantidade de mudas doadas por ano
+    # Contagem por ano em EfetivarDoacao
+    dados_por_ano_efetivar = EfetivarDoacao.objects.annotate(ano=ExtractYear('data_efetivacao')).values('ano').annotate(
+        count=Count('ano'))
+
+    # Contagem por ano em DoacaoAvulsa
+    dados_por_ano_avulsa = DoacaoAvulso.objects.annotate(ano=ExtractYear('data_adocao')).values('ano').annotate(
+        count=Count('ano'))
+
+    # Combine os resultados das duas consultas
+    dados_por_ano = list(chain(dados_por_ano_efetivar, dados_por_ano_avulsa))
+
+    # Agrupe os resultados por ano e calcule a soma das contagens
+    dados_agrupados_por_ano = {}
+    for item in dados_por_ano:
+        ano = item['ano']
+        count = item['count']
+        if ano in dados_agrupados_por_ano:
+            dados_agrupados_por_ano[ano] += count
+        else:
+            dados_agrupados_por_ano[ano] = count
 
     # Somatório por ano
     soma_por_ano = EfetivarDoacao.objects.annotate(ano=ExtractYear('data_efetivacao')).values('ano').annotate(
         somatorio=Sum('quantidade_efetivada'))
 
     # Contagem por espécie
-    dados_por_especie = EfetivarDoacao.objects.values('especie_doada').annotate(count=Count('especie_doada'))
+    # Contagem por espécie com somatório de quantidade (EspecieQuantidade)
+    dados_por_especie_quantidade = EspecieQuantidade.objects.values('especie').annotate(
+        quantidade=Sum('quantidade')
+    )
 
-    # Contagem por tipo de solicitação
+    # Contagem por espécie doada com somatório de quantidade (EfetivarDoacao)
+    dados_por_especie_doada = EfetivarDoacao.objects.values('especie_doada').annotate(
+        quantidade_efetivada=Sum('quantidade_efetivada')
+    )
+    # Mesclar as duas listas por 'especie'
+    especies_combined = {}
+
+    for k, v in groupby(sorted(dados_por_especie_quantidade, key=lambda x: x['especie']), key=lambda x: x['especie']):
+        especies_combined[k] = {'quantidade': sum(item['quantidade'] for item in v), 'quantidade_efetivada': 0}
+
+    for item in dados_por_especie_doada:
+        especie = item['especie_doada']
+        if especie in especies_combined:
+            especies_combined[especie]['quantidade_efetivada'] = item['quantidade_efetivada']
+        else:
+            especies_combined[especie] = {'quantidade': 0, 'quantidade_efetivada': item['quantidade_efetivada']}
+
+    # Contagem por status de solicitação
     dados_por_tipo_solicitacao = SolicitacaoDoacao.objects.values('status').annotate(count=Count('status'))
 
-    # Contagem por tipo de solicitação
+    # Contagem por especie de solicitação
     dados_por_especie_solicitacao = SolicitacaoDoacao.objects.values('especie').annotate(count=Count('especie'))
 
     # Convertendo os resultados para listas
-    lista_por_ano = list(dados_por_ano)
+    lista_por_ano = [{'ano': ano, 'count': count} for ano, count in dados_agrupados_por_ano.items()]
     lista_por_soma = list(soma_por_ano)
-    lista_por_especie = list(dados_por_especie)
+    lista_por_especie_combined = [{'especie': k, **v} for k, v in especies_combined.items()]
     lista_por_tipo_solicitacao = list(dados_por_tipo_solicitacao)
     lista_por_especie_solicitacao = list(dados_por_especie_solicitacao)
 
-    return {'por_ano': lista_por_ano, 'por_soma': lista_por_soma, 'por_especie': lista_por_especie, 'por_tipo_solicitacao': lista_por_tipo_solicitacao, 'por_especie_solicitacao': lista_por_especie_solicitacao}
+    return {'por_ano': lista_por_ano, 'por_soma': lista_por_soma, 'por_especie': lista_por_especie_combined,
+            'por_tipo_solicitacao': lista_por_tipo_solicitacao, 'por_especie_solicitacao': lista_por_especie_solicitacao}
 
 
 @login_required
@@ -177,6 +219,7 @@ def listar_solicitacoes(request):
         'solicitacoes_aprovadas': solicitacoes_aprovadas,
         'solicitacoes_reprovadas': solicitacoes_reprovadas,
     })
+
 
 @login_required
 @user_passes_test(is_member_of_team)
