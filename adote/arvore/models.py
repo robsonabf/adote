@@ -7,6 +7,8 @@ class UserProfile(models.Model):
     email = models.EmailField(max_length=254)
     nome_completo = models.CharField(max_length=100)
     endereco = models.CharField(max_length=200)
+    cidade = models.CharField(max_length=100)
+    estado = models.CharField(max_length=100)
     telefone = models.CharField(max_length=20)
     cpf = models.CharField(max_length=14)
 
@@ -47,3 +49,28 @@ class EfetivarDoacao(models.Model):
 
     def __str__(self):
         return f'Doação efetivada para {self.solicitacao.usuario.username} - {self.solicitacao.especie}'
+
+
+class EspecieQuantidade(models.Model):
+    doacao = models.ForeignKey('DoacaoAvulso', on_delete=models.CASCADE)
+    especie = models.CharField(max_length=150)
+    quantidade = models.IntegerField()
+
+
+class DoacaoAvulso(models.Model):
+    nome_completo = models.CharField(max_length=150)
+    endereco = models.CharField(max_length=300)
+    cidade = models.CharField(max_length=100)
+    estado = models.CharField(max_length=100)
+    telefone = models.CharField(max_length=20)
+    funcionario = models.ForeignKey(User, on_delete=models.CASCADE)
+    data_plantio = models.DateField(null=True, blank=True)
+    data_adocao = models.DateField(null=True, blank=True)
+    local_de_plantio = models.CharField(max_length=200)
+    observacoes = models.CharField(max_length=200, null=True, blank=True)
+
+    def calcular_quantidade_total(self):
+        return self.especiequantidade_set.aggregate(total=models.Sum('quantidade'))['total']
+
+    def __str__(self):
+        return f'Solicitação de {self.nome_completo}'

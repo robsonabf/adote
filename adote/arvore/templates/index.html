@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="jumbotron">
-    <h1 class="display-4">Bem-vindo ao Sistema de Adoção de Mudas do projeto Adote uma Árvore!</h1>
+    <h1 class="display-4">Bem-vindo ao Sistema Replantar de Adoção de Mudas do programa Adote uma Árvore!</h1>
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}
@@ -12,7 +12,7 @@
             {% endfor %}
         </ul>
     {% endif %}
-    <p class="lead">Adote uma muda e faça a diferença no meio ambiente!</p>
+    <p class="lead">Adote uma árvore e faça a diferença no meio ambiente!</p>
     <hr class="my-4">
     <p>Explore as opções abaixo para começar:</p>
     <a class="btn btn-success btn-lg" href="{% url 'lista_mudas' %}" role="button">Ver Mudas Disponíveis</a>

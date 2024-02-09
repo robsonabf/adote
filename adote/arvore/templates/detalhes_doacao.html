@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes da Doação{% endblock %}
+
+{% block content %}
+    <h2>Detalhes da Doação</h2>
+<a href="javascript:history.back()" class="btn btn-primary mb-1">Voltar</a>
+    <p><strong>Nome Completo:</strong> {{ doacao.nome_completo }}</p>
+    <p><strong>Endereço:</strong> {{ doacao.endereco }}</p>
+    <p><strong>Cidade:</strong> {{ doacao.cidade }}</p>
+    <p><strong>Estado:</strong> {{ doacao.estado }}</p>
+    <p><strong>Telefone:</strong> {{ doacao.telefone }}</p>
+    <p><strong>Data de Plantio:</strong> {{ doacao.data_plantio }}</p>
+    <p><strong>Data de Adoção:</strong> {{ doacao.data_adocao }}</p>
+    <p><strong>Local de Plantio:</strong> {{ doacao.local_de_plantio }}</p>
+    <p><strong>Observações:</strong> {{ doacao.observacoes }}</p>
+
+    <h3>Espécies Vinculadas</h3>
+    <ul>
+        {% for especie_quantidade in especies_quantidades %}
+            <li>{{ especie_quantidade.especie }} - {{ especie_quantidade.quantidade }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

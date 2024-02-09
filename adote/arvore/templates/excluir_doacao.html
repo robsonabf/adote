@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+  <div class="container mt-4 mb-2">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title">Confirmar Exclusão</h2>
+        <p class="card-text">Você tem certeza de que deseja excluir a doação de {{ doacao.nome_completo }}?</p>
+
+        <form method="post" action="{% url 'excluir_doacao' doacao.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sim, Excluir</button>
+        </form>
+
+        <a href="{% url 'lista_doacoes' %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -5,6 +5,7 @@
 
 {% block content %}
     <h2>Solicitar Doação</h2>
+    <a href="javascript:history.back()" class="btn btn-primary mb-1">Voltar</a>
     <form method="post" action="{% url 'solicitar_doacao' %}">
         {% csrf_token %}
         <div class="form-group">

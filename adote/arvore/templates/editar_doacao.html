@@ -1,0 +1,84 @@
+<!-- editar_doacao.html -->
+{% extends 'base.html' %}
+
+{% block title %}Editar Doação{% endblock %}
+
+{% block content %}
+  <h2>Editar Doação</h2>
+  <a href="javascript:history.back()" class="btn btn-primary mb-1">Voltar</a>
+  <form method="post" id="doacaoForm">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <h3>Editar Espécies e Quantidades</h3>
+    <p class="text-muted">Abaixo está a lista de espécies salva anteriormente para o registro. Pode excluir e adicionar na sua edição.</p>
+    <div id="especiesQuantidades" class="mb-3">
+      <!-- Loop para pré-popular espécies e quantidades -->
+        {% for especie_quantidade in doacao.especiequantidade_set.all %}
+        <div class="row mb-2">
+          <div class="col-md-6"><span>Espécie: </span>{{ especie_quantidade.especie }}</div>
+          <div class="col-md-3"><span>Quantidade: </span>{{ especie_quantidade.quantidade }}</div>
+          <div class="col-md-3">
+            <button type="button" onclick="removerEspecieQuantidade(this)" class="btn btn-danger">Remover</button>
+            <input type="hidden" name="especies_quantidades[]" value="{{ especie_quantidade.especie }}|{{ especie_quantidade.quantidade }}">
+          </div>
+        </div>
+      {% endfor %}
+
+    </div>
+
+    <div class="mb-3">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <label for="novaEspecie" class="form-label">Nova Espécie:</label>
+          <input type="text" id="novaEspecie" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label for="novaQuantidade" class="form-label">Quantidade:</label>
+          <input type="number" id="novaQuantidade" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <button type="button" id="adicionar-especie" class="btn btn-primary btn-auto">Adicionar Espécie</button>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success mb-2">Salvar edição</button>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const especiesQuantidadesContainer = document.getElementById('especiesQuantidades');
+      const adicionarEspecieButton = document.getElementById('adicionar-especie');
+
+      adicionarEspecieButton.addEventListener('click', function () {
+        const novaEspecie = document.getElementById('novaEspecie').value;
+        const novaQuantidade = document.getElementById('novaQuantidade').value;
+
+        if (novaEspecie && novaQuantidade) {
+          const div = document.createElement('div');
+          div.className = 'row mb-2';
+          div.innerHTML = `
+            <div class="col-md-6">${novaEspecie}</div>
+            <div class="col-md-3">${novaQuantidade}</div>
+            <div class="col-md-3">
+              <button type="button" onclick="removerEspecieQuantidade(this)" class="btn btn-danger">Remover</button>
+              <input type="hidden" name="especies_quantidades[]" value="${novaEspecie}|${novaQuantidade}">
+            </div>
+          `;
+
+          especiesQuantidadesContainer.appendChild(div);
+
+          // Limpar campos após adicionar
+          document.getElementById('novaEspecie').value = '';
+          document.getElementById('novaQuantidade').value = '';
+        }
+      });
+    });
+
+    function removerEspecieQuantidade(button) {
+      const div = button.parentNode.parentNode;
+      div.parentNode.removeChild(div);
+    }
+  </script>
+{% endblock %}

@@ -1,0 +1,136 @@
+<!-- criar_doacao.html -->
+{% extends 'base.html' %}
+
+{% block title %}Criar Doação{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Criar Doação</h2>
+      <a href="javascript:history.back()" class="btn btn-primary mb-1">Voltar</a>
+    <form method="post" id="doacaoForm">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="{{ form.nome_completo.id_for_label }}" class="form-label">Nome Completo:</label>
+        {{ form.nome_completo }}
+      </div>
+    <div class="mb-3">
+        <label for="{{ form.endereco.id_for_label }}" class="form-label">Endereço:</label>
+        {{ form.endereco }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.cidade.id_for_label }}" class="form-label">Cidade:</label>
+        {{ form.cidade }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.estado.id_for_label }}" class="form-label">Estado:</label>
+        {{ form.estado }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.telefone.id_for_label }}" class="form-label">Telefone:</label>
+        {{ form.telefone }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.data_plantio.id_for_label }}" class="form-label">Data de Plantio:</label>
+        {{ form.data_plantio }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.data_adocao.id_for_label }}" class="form-label">Data de Adoção:</label>
+        {{ form.data_adocao }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.local_de_plantio.id_for_label }}" class="form-label">Local de Plantio:</label>
+        {{ form.local_de_plantio }}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.observacoes.id_for_label }}" class="form-label">Observações:</label>
+        {{ form.observacoes }}
+      </div>
+    <div class="mb-4 p-3 border border-info rounded">
+    <h3 class="mt-4">Adicionar Espécies e Quantidades</h3>
+    <div id="especiesQuantidades" class="mb-3">
+        <!-- Lista de espécies e quantidades -->
+    </div>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-12">
+                <p class="text-muted">Insira as espécies e suas quantidades abaixo. Clique em "Adicionar Espécie" para incluir mais de uma.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <label for="novaEspecie" class="form-label">Nova Espécie:</label>
+                <input type="text" id="novaEspecie" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label for="novaQuantidade" class="form-label">Quantidade:</label>
+                <input type="number" id="novaQuantidade" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <button type="button" onclick="adicionarEspecieQuantidade()" class="btn btn-primary btn-auto">Adicionar Espécie</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+      <div class="mb-3">
+        <button type="submit" class="btn btn-success">Salvar doação</button>
+      </div>
+      </form>
+    </div>
+
+  <script>
+    function adicionarEspecieQuantidade() {
+      var novaEspecie = document.getElementById('novaEspecie').value;
+      var novaQuantidade = document.getElementById('novaQuantidade').value;
+
+      if (novaEspecie && novaQuantidade) {
+        var container = document.getElementById('especiesQuantidades');
+        var div = document.createElement('div');
+        div.className = 'mb-2';
+        div.innerHTML = '<div class="row"><div class="col-md-6"><span>Espécie: </span>' + novaEspecie + '</div>' +
+                        '<div class="col-md-3"><span>Quantidade: </span>' + novaQuantidade + '</div>' +
+                        '<div class="col-md-3"><button type="button" onclick="removerEspecieQuantidade(this)" class="btn btn-danger">Remover</button>' +
+                        '<input type="hidden" name="especies_quantidades[]" value="' + novaEspecie + '|' + novaQuantidade + '"></div></div>';
+
+        container.appendChild(div);
+
+        // Limpar campos após adicionar
+        document.getElementById('novaEspecie').value = '';
+        document.getElementById('novaQuantidade').value = '';
+      }
+    }
+
+    function removerEspecieQuantidade(button) {
+      var div = button.parentNode.parentNode.parentNode;
+      div.parentNode.removeChild(div);
+    }
+
+  document.getElementById('id_telefone').addEventListener('input', function (event) {
+    var input = event.target;
+    var value = input.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+    var formattedValue = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3'); // Formata como (XX) XXXXX-XXXX
+
+    input.value = formattedValue;
+  });
+  document.getElementById('doacaoForm').addEventListener('submit', function (event) {
+    var telefoneInput = document.getElementById('id_telefone');
+    var telefoneValue = telefoneInput.value;
+
+    // Remove caracteres não numéricos
+    var valueWithoutSpecialChars = telefoneValue.replace(/\D/g, '');
+
+    // Atualiza o valor no input do telefone
+    telefoneInput.value = valueWithoutSpecialChars;
+});
+  </script>
+{% endblock %}

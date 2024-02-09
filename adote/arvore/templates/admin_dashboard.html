@@ -10,6 +10,7 @@
         const ctxPorEspecie = document.getElementById('graficoPorEspecie').getContext('2d');
         const ctx = document.getElementById('graficoPorTipoSolicitacao').getContext('2d');
         const ctxespecieSolicita = document.getElementById('graficoPorEspecieSolicitacao').getContext('2d');
+        const ctxSomaAno = document.getElementById('graficoSomaPorAno').getContext('2d');
 
         console.log(dados_estatisticos);
 
@@ -27,7 +28,20 @@
                 }],
             },
         });
-
+        // Gráfico Soma Por Ano
+        new Chart(ctxSomaAno, {
+            type: 'bar',
+            data: {
+                labels: dados_estatisticos.por_soma.map(item => item.ano),
+                datasets: [{
+                    label: 'Quantidade de Mudas Doadas Por Ano',
+                    data: dados_estatisticos.por_soma.map(item => item.somatorio),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+        });
         // Gráfico Por Espécie
         new Chart(ctxPorEspecie, {
             type: 'pie',
@@ -99,14 +113,23 @@
   <div class="container mt-5">
     <h2>Painel Administrativo</h2>
     <p>Bem-vindo à área administrativa. Aqui você pode gerenciar as mudas, verificar as solicitações e visualizar dados coletados.</p>
-     <ul class="navbar-nav ml-auto">
-     <li class="nav-item">
-          <a class="nav-link" href="{% url 'adicionar_muda' %}">Adicionar Muda</a>
-     </li>
-     <li>
-          <a class="nav-link" href="{% url 'listar_solicitacoes' %}">Listar Solicitações</a>
-     </li>
-     </ul>
+     <ul class="nav">
+        <li class="nav-item bg-dark">
+            <a class="nav-link" href="{% url 'adicionar_muda' %}">Adicionar Muda</a>
+        </li>
+        <li class="nav-item bg-dark">
+            <a class="nav-link" href="{% url 'listar_solicitacoes' %}">Listar Solicitações</a>
+        </li>
+        <li class="nav-item bg-dark">
+            <a class="nav-link" href="{% url 'lista_doacoes' %}">Administrar Doações Avulsas</a>
+        </li>
+        <li class="nav-item bg-dark">
+            <a class="nav-link" href="{% url 'pesquisar_adotantes' %}">Pesquisar Registros de Adoção por Nome</a>
+        </li>
+        <li class="nav-item bg-dark">
+            <a class="nav-link" href="{% url 'consulta_e_gera_pdf' %}">Imprimir relatório de Doações Avulsas</a>
+        </li>
+    </ul>
     <!-- Adicione mais conteúdo conforme necessário -->
 
     <div class="row mt-4">
@@ -116,9 +139,14 @@
           <canvas id="graficoPorEspecie" width="400" height="400"></canvas>
       </div>
       <div class="col-md-6">
-        <h3>Quantidade de Mudas Doadas Por Ano</h3>
+        <h3>Quantidade de Doações Por Ano</h3>
         <!-- Adicione uma tabela, gráfico ou informações relevantes -->
           <canvas id="graficoPorAno" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Somatório de Mudas Doadas Por Ano</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoSomaPorAno" width="400" height="400"></canvas>
       </div>
       <div class="col-md-6">
         <h3>Quantidade das Solicitações de Mudas Por Situação</h3>

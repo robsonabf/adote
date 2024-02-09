@@ -1,40 +1,105 @@
-<!-- listar_solicitacoes.html -->
 {% extends 'base.html' %}
 
 {% block title %}Listar Solicitações de Doação{% endblock %}
 
 {% block content %}
-    <h2>Listar Solicitações de Doação</h2>
-    <ul>
-        <h3>Solicitações Pendentes</h3>
-        {% for solicitacao in solicitacoes %}
-                {% if solicitacao.status == 'Pendente' %}
-                <li>
-                {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
-                - Status: {{ solicitacao.status }}
-                - <a href="{% url 'aprovar_reprovar_doacao' solicitacao.id %}">Aprovar/Reprovar</a>
-                </li>
-                {% endif %}
-        {% endfor %}
-        <h3>Solicitações Aprovadas</h3>
-        {% for efetivada in efetivadas %}
-            {% if efetivada.solicitacao.status == 'Aprovada' %}
-            <li>
-                {{ efetivada.solicitacao.usuario.username }} solicitou {{ efetivada.solicitacao.quantidade_solicitada }} mudas
-                - Status: {{ efetivada.solicitacao.status }}
-                - Quantidade efetivada: {{ efetivada.quantidade_efetivada }}
-                - Espécie doada: {{ efetivada.especie_doada }}
-            </li>
-            {% endif %}
-        {% endfor %}
-        <h3>Solicitações Reprovadas</h3>
-        {% for solicitacao in solicitacoes %}
-                {% if solicitacao.status == 'Reprovada' %}
-            <li>
-                    {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
-                    - Status: {{ solicitacao.status }} - Status: {{ solicitacao.observacoes }}
-            </li>
-                {% endif %}
-        {% endfor %}
-    </ul>
+    <h2 class="mb-4">Listar Solicitações de Doação</h2>
+    <a href="javascript:history.back()" class="btn btn-primary mb-1">Voltar</a>
+    <div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3 class="card-title">Solicitações Pendentes</h3>
+                <ul class="list-group">
+                    {% for solicitacao in solicitacoes_pendentes %}
+                        <li class="list-group-item">
+                            {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
+                            - Status: {{ solicitacao.status }}
+                            - <a href="{% url 'aprovar_reprovar_doacao' solicitacao.id %}" class="btn btn-info btn-sm">Aprovar/Reprovar</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if solicitacoes_pendentes.has_previous %}
+                            <a href="?page_pendentes=1">&laquo; primeiro</a>
+                            <a href="?page_pendentes={{ solicitacoes_pendentes.previous_page_number }}">anterior</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Página {{ solicitacoes_pendentes.number }} de {{ solicitacoes_pendentes.paginator.num_pages }}.
+                        </span>
+
+                        {% if solicitacoes_pendentes.has_next %}
+                            <a href="?page_pendentes={{ solicitacoes_pendentes.next_page_number }}">próximo</a>
+                            <a href="?page_pendentes={{ solicitacoes_pendentes.paginator.num_pages }}">último &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="col-md-6">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="card-title">Solicitações Aprovadas</h3>
+            <ul class="list-group">
+                {% for efetivada in solicitacoes_aprovadas %}
+                    <li class="list-group-item">
+                        {{ efetivada.solicitacao.usuario.username }} solicitou {{ efetivada.solicitacao.quantidade_solicitada }} mudas
+                        - Status: {{ efetivada.solicitacao.status }}
+                        - Quantidade efetivada: {{ efetivada.quantidade_efetivada }}
+                        - Espécie doada: {{ efetivada.especie_doada }}
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="pagination">
+                <span class="step-links">
+                    {% if solicitacoes_aprovadas.has_previous %}
+                        <a href="?page=1">&laquo; primeiro</a>
+                        <a href="?page={{ solicitacoes_aprovadas.previous_page_number }}">anterior</a>
+                    {% endif %}
+                    <span class="current">
+                        Página {{ solicitacoes_aprovadas.number }} de {{ solicitacoes_aprovadas.paginator.num_pages }}.
+                    </span>
+                    {% if solicitacoes_aprovadas.has_next %}
+                        <a href="?page={{ solicitacoes_aprovadas.next_page_number }}">próximo</a>
+                        <a href="?page={{ solicitacoes_aprovadas.paginator.num_pages }}">último &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+            </div>
+        </div>
+    </div>
+            <div class="col-md-6">
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="card-title">Solicitações Reprovadas</h3>
+            <ul class="list-group">
+                {% for solicitacao in solicitacoes_reprovadas %}
+                    <li class="list-group-item">
+                        {{ solicitacao.usuario.username }} solicitou {{ solicitacao.quantidade_solicitada }} mudas
+                        - Status: {{ solicitacao.status }} - Status: {{ solicitacao.observacoes }}
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="pagination">
+                <span class="step-links">
+                    {% if solicitacoes_reprovadas.has_previous %}
+                        <a href="?page=1">&laquo; primeiro</a>
+                        <a href="?page={{ solicitacoes_reprovadas.previous_page_number }}">anterior</a>
+                    {% endif %}
+                    <span class="current">
+                        Página {{ solicitacoes_reprovadas.number }} de {{ solicitacoes_reprovadas.paginator.num_pages }}.
+                    </span>
+                    {% if solicitacoes_reprovadas.has_next %}
+                        <a href="?page={{ solicitacoes_reprovadas.next_page_number }}">próximo</a>
+                        <a href="?page={{ solicitacoes_reprovadas.paginator.num_pages }}">último &raquo;</a>
+                    {% endif %}
+                </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
