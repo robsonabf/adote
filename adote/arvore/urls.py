@@ -1,6 +1,7 @@
 from django.urls import path
+from django.contrib.auth.views import LoginView, LogoutView
 from . import views
-
+from .views import RegisterView
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -15,8 +16,6 @@ urlpatterns = [
     path('listar_solicitacoes/', views.listar_solicitacoes, name='listar_solicitacoes'),
     path('aprovar_reprovar_doacao/<int:solicitacao_id>/', views.aprovar_reprovar_doacao, name='aprovar_reprovar_doacao'),
     path('minhas_solicitacoes/', views.minhas_solicitacoes, name='minhas_solicitacoes'),
-    path('api/user-profiles/', views.UserProfileListCreateView, name='user-profile-list-create'),
-    path('api/user-profiles/<int:pk>/', views.UserProfileDetailView, name='user-profile-detail'),
     path('doacoes/', views.listar_doacoes, name='lista_doacoes'),
     path('doacoes/alterar/<int:pk>/', views.editar_doacao, name='alterar_doacao'),
     path('doacoes/excluir/<int:pk>/', views.excluir_doacao, name='excluir_doacao'),
@@ -24,4 +23,7 @@ urlpatterns = [
     path('doacoes/criar/', views.criar_doacao, name='criar_doacao'),
     path('pesquisar_adotantes/', views.pesquisar_adotantes, name='pesquisar_adotantes'),
     path('consulta_e_gera_pdf/', views.consulta_e_gera_pdf, name='consulta_e_gera_pdf'),
+    path('api/login/', LoginView.as_view(), name='api_login'),
+    path('api/logout/', LogoutView.as_view(), name='api_logout'),
+    path('api/register/', RegisterView.as_view(), name='api_register'),
 ]

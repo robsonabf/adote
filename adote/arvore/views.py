@@ -1,20 +1,26 @@
-from itertools import groupby, chain
-
+from datetime import datetime, timedelta, timezone
+from itertools import chain, groupby
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, DoacaoAvulsoForm, EspecieQuantidadeFormSet, MudaForm, SolicitacaoDoacaoForm, \
-    EspecieQuantidadeForm, DoacaoAvulsoForm2
+from rest_framework.views import APIView
+from django.db import IntegrityError
+from .forms import CustomUserCreationForm, DoacaoAvulsoForm, MudaForm, SolicitacaoDoacaoForm, DoacaoAvulsoForm2
 from .models import Muda, SolicitacaoDoacao, EfetivarDoacao, UserProfile, EspecieQuantidade
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Count, Sum
-from django.db.models.functions import ExtractYear
+from django.db.models import Count, Sum, Subquery, OuterRef
+from django.db.models.functions import ExtractYear, ExtractMonth
 from .models import DoacaoAvulso
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
+from rest_framework import viewsets, serializers, views, status, permissions
+from django.contrib.auth.models import User
+from .serializers import UserSerializer
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
 import io
 #API
 from .serializers import UserProfileSerializer
@@ -76,7 +82,8 @@ def is_member_of_team(user):
 @user_passes_test(is_member_of_team)
 def admin_dashboard(request):
     dados_estatisticos = obter_dados_estatisticos()
-    return render(request, 'admin_dashboard.html', {'dados_estatisticos': dados_estatisticos})
+    lista_por_mes = obter_doacoes_ultimos_meses()
+    return render(request, 'admin_dashboard.html', {'dados_estatisticos': dados_estatisticos, 'lista_mes': lista_por_mes['lista_por_mes']})
 
 
 def obter_dados_estatisticos():
@@ -98,13 +105,43 @@ def obter_dados_estatisticos():
         ano = item['ano']
         count = item['count']
         if ano in dados_agrupados_por_ano:
-            dados_agrupados_por_ano[ano] += count
+            if isinstance(dados_agrupados_por_ano[ano], int):
+                dados_agrupados_por_ano[ano] += count
+            else:
+                dados_agrupados_por_ano[ano] = count
         else:
             dados_agrupados_por_ano[ano] = count
 
-    # Somatório por ano
-    soma_por_ano = EfetivarDoacao.objects.annotate(ano=ExtractYear('data_efetivacao')).values('ano').annotate(
-        somatorio=Sum('quantidade_efetivada'))
+
+        # Consulta para somar as quantidades por ano em EspecieQuantidade
+        # Somatório por ano em EfetivarDoacao
+    soma_por_ano_efetivar = EfetivarDoacao.objects.annotate(ano=ExtractYear('data_efetivacao')).values(
+    'ano').annotate(somatorio_efetivar=Sum('quantidade_efetivada'))
+
+    soma_por_ano_especie = (
+    EspecieQuantidade.objects.filter(doacao__data_adocao__isnull=False)
+    .annotate(ano=ExtractYear('doacao__data_adocao')).values('ano').annotate(somatorio_especie=Sum('quantidade')))
+
+    # Combine os resultados das duas consultas
+    dados_por_ano_soma = list(chain(soma_por_ano_efetivar, soma_por_ano_especie))
+    # Agrupe os resultados por ano e calcule a soma das contagens
+    dados_agrupados_por_ano_soma = {}
+    for item in dados_por_ano_soma:
+        ano = item['ano']
+        somatorio_efetivar = item.get('somatorio_efetivar', 0)
+        somatorio_especie = item.get('somatorio_especie', 0)
+
+        if ano in dados_agrupados_por_ano_soma:
+            # Se existir, adicione os valores
+            dados_agrupados_por_ano_soma[ano]['somatorio_efetivar'] = dados_agrupados_por_ano_soma[ano].get(
+            'somatorio_efetivar', 0) + somatorio_efetivar
+            dados_agrupados_por_ano_soma[ano]['somatorio_especie'] = dados_agrupados_por_ano_soma[ano].get(
+            'somatorio_especie', 0) + somatorio_especie
+        else:
+            # Se não existir, crie um novo registro
+            dados_agrupados_por_ano_soma[ano] = {'somatorio_efetivar': somatorio_efetivar,
+                                                 'somatorio_especie': somatorio_especie,
+                }
 
     # Contagem por espécie
     # Contagem por espécie com somatório de quantidade (EspecieQuantidade)
@@ -131,13 +168,15 @@ def obter_dados_estatisticos():
 
     # Contagem por status de solicitação
     dados_por_tipo_solicitacao = SolicitacaoDoacao.objects.values('status').annotate(count=Count('status'))
-
     # Contagem por especie de solicitação
     dados_por_especie_solicitacao = SolicitacaoDoacao.objects.values('especie').annotate(count=Count('especie'))
 
     # Convertendo os resultados para listas
     lista_por_ano = [{'ano': ano, 'count': count} for ano, count in dados_agrupados_por_ano.items()]
-    lista_por_soma = list(soma_por_ano)
+    lista_por_soma = [
+        {'ano': ano, 'somatorio_efetivar': item['somatorio_efetivar'], 'somatorio_especie': item['somatorio_especie']}
+        for ano, item in dados_agrupados_por_ano_soma.items()]
+
     lista_por_especie_combined = [{'especie': k, **v} for k, v in especies_combined.items()]
     lista_por_tipo_solicitacao = list(dados_por_tipo_solicitacao)
     lista_por_especie_solicitacao = list(dados_por_especie_solicitacao)
@@ -475,16 +514,166 @@ def consulta_e_gera_pdf(request):
     return response
 
 
-#API
-@login_required
-@user_passes_test(is_member_of_team)
-class UserProfileListCreateView(generics.ListCreateAPIView):
-    queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
+def obter_doacoes_ultimos_meses():
+    # Mapeie números de mês para nomes de mês
+    meses = {
+        1: 'Janeiro',
+        2: 'Fevereiro',
+        3: 'Março',
+        4: 'Abril',
+        5: 'Maio',
+        6: 'Junho',
+        7: 'Julho',
+        8: 'Agosto',
+        9: 'Setembro',
+        10: 'Outubro',
+        11: 'Novembro',
+        12: 'Dezembro',
+    }
+    # Obtém a data atual
+    data_atual = datetime.now()
+
+    # Calcula a data há 6 meses atrás
+    data_inicio = timezone.now() - timedelta(days=180)
+
+    # Consulta as doações efetivadas nos últimos 6 meses
+    doacoes_efetivadas = EfetivarDoacao.objects.filter(
+        data_efetivacao__gte=data_inicio,
+        data_efetivacao__lte=data_atual
+    ).annotate(mes=ExtractMonth('data_efetivacao')).values('mes').annotate(
+        count=Count('mes'),
+        somatorio=Sum('quantidade_efetivada')
+    )
+    # Consulta as doações avulsas nos últimos 6 meses
+    doacoes_avulsas = EspecieQuantidade.objects.filter(
+        doacao__data_adocao__gte=data_inicio,
+        doacao__data_adocao__lte=data_atual
+    ).annotate(
+        doacao_avulso_id=Subquery(
+            DoacaoAvulso.objects.filter(
+                id=OuterRef('doacao_id')
+            ).values('id')[:1]
+        )
+    ).values(mes=ExtractMonth('doacao__data_adocao')).annotate(
+        count=Count('doacao_avulso_id', distinct=True),
+        somatorio=Sum('quantidade')
+    )
+
+    # Combine os resultados das duas consultas
+    dados_por_mes = list(chain(doacoes_efetivadas, doacoes_avulsas))
+    # Agrupe os resultados por mês e calcule a soma das contagens
+    dados_agrupados_por_mes = {}
+    for item in dados_por_mes:
+        mes_numero = item['mes']
+        mes_nome = meses.get(mes_numero, mes_numero)
+        count = item['count']
+        somatorio = item.get('somatorio', 0)
+
+        if mes_nome in dados_agrupados_por_mes:
+            # Incrementa os valores existentes
+            dados_agrupados_por_mes[mes_nome]['count'] += count
+            dados_agrupados_por_mes[mes_nome]['somatorio'] += somatorio
+        else:
+            # Adiciona um novo registro para o mês
+            dados_agrupados_por_mes[mes_nome] = {
+                'count': count,
+                'somatorio': somatorio,
+            }
+    # Convertendo os resultados para listas
+    lista_por_mes = [
+        {'mes': mes_nome, 'count': dados_agrupados_por_mes[mes_nome]['count'],
+         'somatorio': dados_agrupados_por_mes[mes_nome]['somatorio']} for mes_numero, mes_nome in meses.items()
+        if mes_nome in dados_agrupados_por_mes
+    ]
+    return {'lista_por_mes': lista_por_mes}
 
 
-@login_required
-@user_passes_test(is_member_of_team)
-class UserProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['id', 'email', 'nome_completo', 'endereco', 'cidade', 'estado', 'telefone', 'cpf']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'profile']
+
+    def create(self, validated_data):
+        profile_data = validated_data.pop('profile')
+        try:
+            user = User.objects.create(**validated_data)
+            UserProfile.objects.create(user=user, **profile_data)
+
+            # Crie um token para o usuário recém-registrado (opcional)
+            Token.objects.create(user=user)
+
+            return user
+
+        except IntegrityError as e:
+            # Em caso de violação de unicidade (username duplicado), emita uma mensagem
+            message = f"Erro ao registrar usuário: {e}"
+            print(message)
+            raise serializers.ValidationError(message)
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', {})
+        profile_instance = instance.profile
+
+        instance.email = validated_data.get('email', instance.email)
+        instance.username = validated_data.get('username', instance.username)
+        instance.save()
+
+        profile_instance.email = profile_data.get('email', profile_instance.email)
+        profile_instance.nome_completo = profile_data.get('nome_completo', profile_instance.nome_completo)
+        profile_instance.endereco = profile_data.get('endereco', profile_instance.endereco)
+        profile_instance.cidade = profile_data.get('cidade', profile_instance.cidade)
+        profile_instance.estado = profile_data.get('estado', profile_instance.estado)
+        profile_instance.telefone = profile_data.get('telefone', profile_instance.telefone)
+        profile_instance.cpf = profile_data.get('cpf', profile_instance.cpf)
+        profile_instance.save()
+
+        return instance
+
+
+class LoginView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            # Faça login no usuário, se a autenticação for bem-sucedida
+            login(request, user)
+
+            # Crie ou obtenha o token de autenticação
+            token, created = Token.objects.get_or_create(user=user)
+
+            # Retorne a resposta JSON com o token (ou qualquer outra informação necessária)
+            return Response({'token': token.key, 'message': 'Autenticação bem-sucedida'}, status=status.HTTP_200_OK)
+        else:
+            # Caso as credenciais sejam inválidas
+            return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class RegisterView(APIView):
+    def post(self, request):
+        user_serializer = UserSerializer(data=request.data)
+        profile_serializer = UserProfileSerializer(data=request.data.get('profile', {}))
+
+        if user_serializer.is_valid() and profile_serializer.is_valid():
+
+            user = user_serializer.save()
+            profile_serializer.save(user=user)
+
+            # Crie um token para o usuário recém-registrado (opcional)
+            Token.objects.create(user=user)
+
+            return Response({'message': 'Registro bem-sucedido'}, status=status.HTTP_201_CREATED)
+
+        return Response({'error': 'Falha no registro'}, status=status.HTTP_400_BAD_REQUEST)
