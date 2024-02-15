@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from itertools import chain, groupby
 from django.contrib.auth.decorators import login_required
-from rest_framework.views import APIView
 from django.db import IntegrityError
+from rest_framework.authentication import TokenAuthentication
+
 from .forms import CustomUserCreationForm, DoacaoAvulsoForm, MudaForm, SolicitacaoDoacaoForm, DoacaoAvulsoForm2
 from .models import Muda, SolicitacaoDoacao, EfetivarDoacao, UserProfile, EspecieQuantidade
 from django.contrib.auth import login, authenticate
@@ -17,14 +18,14 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 from rest_framework import viewsets, serializers, views, status, permissions
-from django.contrib.auth.models import User
-from .serializers import UserSerializer
-from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 import io
 #API
-from .serializers import UserProfileSerializer
-from rest_framework import generics
+from .serializers import UserSerializer, UserProfileSerializer, SolicitacaoDoacaoSerializer
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import IsAuthenticated
 
 
 @login_required
@@ -588,57 +589,7 @@ def obter_doacoes_ultimos_meses():
     return {'lista_por_mes': lista_por_mes}
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ['id', 'email', 'nome_completo', 'endereco', 'cidade', 'estado', 'telefone', 'cpf']
-
-
-class UserSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer()
-
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'profile']
-
-    def create(self, validated_data):
-        profile_data = validated_data.pop('profile')
-        try:
-            user = User.objects.create(**validated_data)
-            UserProfile.objects.create(user=user, **profile_data)
-
-            # Crie um token para o usuário recém-registrado (opcional)
-            Token.objects.create(user=user)
-
-            return user
-
-        except IntegrityError as e:
-            # Em caso de violação de unicidade (username duplicado), emita uma mensagem
-            message = f"Erro ao registrar usuário: {e}"
-            print(message)
-            raise serializers.ValidationError(message)
-
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile', {})
-        profile_instance = instance.profile
-
-        instance.email = validated_data.get('email', instance.email)
-        instance.username = validated_data.get('username', instance.username)
-        instance.save()
-
-        profile_instance.email = profile_data.get('email', profile_instance.email)
-        profile_instance.nome_completo = profile_data.get('nome_completo', profile_instance.nome_completo)
-        profile_instance.endereco = profile_data.get('endereco', profile_instance.endereco)
-        profile_instance.cidade = profile_data.get('cidade', profile_instance.cidade)
-        profile_instance.estado = profile_data.get('estado', profile_instance.estado)
-        profile_instance.telefone = profile_data.get('telefone', profile_instance.telefone)
-        profile_instance.cpf = profile_data.get('cpf', profile_instance.cpf)
-        profile_instance.save()
-
-        return instance
-
-
-class LoginView(views.APIView):
+class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -651,11 +602,12 @@ class LoginView(views.APIView):
             # Faça login no usuário, se a autenticação for bem-sucedida
             login(request, user)
 
+            #CASO NÃO ESTEJA UTILIZANDO O AUTOTOKEN DO DRF, PODE IMPLEMENTAR MANUALMENTE COM OUTRAS CONFIGURAÇÕES
             # Crie ou obtenha o token de autenticação
-            token, created = Token.objects.get_or_create(user=user)
+            #token, created = Token.objects.get_or_create(user=user)
 
             # Retorne a resposta JSON com o token (ou qualquer outra informação necessária)
-            return Response({'token': token.key, 'message': 'Autenticação bem-sucedida'}, status=status.HTTP_200_OK)
+            return Response({'message': 'Autenticação bem-sucedida'}, status=status.HTTP_200_OK)
         else:
             # Caso as credenciais sejam inválidas
             return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -665,15 +617,36 @@ class RegisterView(APIView):
     def post(self, request):
         user_serializer = UserSerializer(data=request.data)
         profile_serializer = UserProfileSerializer(data=request.data.get('profile', {}))
+        try:
+            if user_serializer.is_valid() and profile_serializer.is_valid():
+                user = user_serializer.save()
+                # Crie um token para o usuário recém-registrado (opcional)
+                Token.objects.create(user=user)
 
-        if user_serializer.is_valid() and profile_serializer.is_valid():
-
-            user = user_serializer.save()
-            profile_serializer.save(user=user)
-
-            # Crie um token para o usuário recém-registrado (opcional)
-            Token.objects.create(user=user)
-
-            return Response({'message': 'Registro bem-sucedido'}, status=status.HTTP_201_CREATED)
+                return Response({'message': 'Registro bem-sucedido'}, status=status.HTTP_201_CREATED)
+        except IntegrityError as e:
+            # Em caso de violação de unicidade (UserProfile duplicado), emita uma mensagem
+            message = f"Erro ao registrar usuário: {e}"
+            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'error': 'Falha no registro'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        # Invalida o token de autenticação, forçando o usuário a fazer login novamente
+        request.auth.delete()
+        return Response({'message': 'Logout bem-sucedido'}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def api_listar_solicitacoes(request):
+    if request.method == 'GET':
+        solicitacoes = SolicitacaoDoacao.objects.filter(usuario=request.user)
+        serializer = SolicitacaoDoacaoSerializer(solicitacoes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({'error': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

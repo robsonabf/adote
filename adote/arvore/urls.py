@@ -1,7 +1,9 @@
 from django.urls import path
-from django.contrib.auth.views import LoginView, LogoutView
 from . import views
-from .views import RegisterView
+from .views import RegisterView, LoginView, LogoutView
+from rest_framework.authtoken.views import obtain_auth_token
+from .views import api_listar_solicitacoes
+
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -24,6 +26,8 @@ urlpatterns = [
     path('pesquisar_adotantes/', views.pesquisar_adotantes, name='pesquisar_adotantes'),
     path('consulta_e_gera_pdf/', views.consulta_e_gera_pdf, name='consulta_e_gera_pdf'),
     path('api/login/', LoginView.as_view(), name='api_login'),
-    path('api/logout/', LogoutView.as_view(), name='api_logout'),
+    path('api/token/', obtain_auth_token, name='api_token'),
     path('api/register/', RegisterView.as_view(), name='api_register'),
+    path('api/logout/', LogoutView.as_view(), name='api_logout'),
+    path('api/listar_solicitacoes/', api_listar_solicitacoes, name='api_listar_solicitacoes'),
 ]

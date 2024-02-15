@@ -17,7 +17,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(template_name='logout.html'), name='logout'),
     path('accounts/profile/', auth_views.LoginView.as_view(redirect_authenticated_user=True), name='profile'),
     #path('api/', include(router.urls)),
-    path('api/', include('arvore.urls')),
 ]
 
 
