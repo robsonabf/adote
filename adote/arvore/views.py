@@ -1,9 +1,15 @@
-from datetime import datetime, timedelta, timezone
 from itertools import chain, groupby
+import datetime
+from datetime import timedelta, timezone
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
+from reportlab.platypus import Image, PageTemplate
 from rest_framework.authentication import TokenAuthentication
-
+import shutil
+import os
+from reportlab.lib.pagesizes import landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Paragraph
 from .forms import CustomUserCreationForm, DoacaoAvulsoForm, MudaForm, SolicitacaoDoacaoForm, DoacaoAvulsoForm2
 from .models import Muda, SolicitacaoDoacao, EfetivarDoacao, UserProfile, EspecieQuantidade
 from django.contrib.auth import login, authenticate
@@ -16,9 +22,12 @@ from django.db.models.functions import ExtractYear, ExtractMonth
 from .models import DoacaoAvulso
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
-from reportlab.pdfgen import canvas
-from rest_framework import viewsets, serializers, views, status, permissions
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from rest_framework import status, permissions
 import io
+from django.conf import settings
 #API
 from .serializers import UserSerializer, UserProfileSerializer, SolicitacaoDoacaoSerializer
 from rest_framework.response import Response
@@ -478,30 +487,84 @@ def pesquisar_adotantes(request):
 @login_required
 @user_passes_test(is_member_of_team)
 def consulta_e_gera_pdf(request):
-    # Realize a consulta no banco de dados aqui
+    # Realize a consulta no banco de dados
     resultados = DoacaoAvulso.objects.all()
 
+    # Configurações para a orientação da página (paisagem)
+    width, height = landscape(A4)
+
     # Inicie o buffer do PDF
-    # Configurações para o tamanho da página
-    width, height = 595, 842  # Tamanho padrão da página A4 em pontos
     buffer = io.BytesIO()
-    p = canvas.Canvas(buffer, pagesize=(width, height))
+    pdf = SimpleDocTemplate(buffer, pagesize=(width, height))
 
-    # Adicione os resultados ao PDF
+    # Lista para armazenar os dados dos resultados
+    data = []
+
+    # Adicione os resultados à lista de dados
     for resultado in resultados:
-        p.drawString(100, 800, f"Nome Completo: {resultado.nome_completo}")
-        p.drawString(100, 780, f"Endereço: {resultado.endereco}")
-        p.drawString(100, 760, f"Cidade: {resultado.cidade}")
-        p.drawString(100, 740, f"Estado: {resultado.estado}")
-        p.drawString(100, 720, f"Telefone: {resultado.telefone}")
-        p.drawString(100, 700, f"Data de Plantio: {resultado.data_plantio}")
-        p.drawString(100, 680, f"Data de Adoção: {resultado.data_adocao}")
-        p.drawString(100, 660, f"Local de Plantio: {resultado.local_de_plantio}")
-        p.drawString(100, 640, f"Observações: {resultado.observacoes}")
+        data.append([
+            Paragraph(resultado.nome_completo, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.endereco, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.cidade, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.estado, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.telefone, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.data_plantio.strftime('%d/%m/%Y'), ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.data_adocao.strftime('%d/%m/%Y'), ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.local_de_plantio, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK')),
+            Paragraph(resultado.observacoes, ParagraphStyle(name='Normal', fontSize=10, leading=12, wordWrap='CJK'))
+        ])
 
-        p.showPage()  # Adicione uma nova página para cada resultado
-        # Conclua o PDF
-    p.save()
+    # Adicione o título à lista de dados
+    header = [
+        'Nome Completo',
+        'Endereço',
+        'Cidade',
+        'Estado',
+        'Telefone',
+        'Data de Plantio',
+        'Data de Adoção',
+        'Local de Plantio',
+        'Observações'
+    ]
+    data.insert(0, header)
+
+    # Crie a tabela com os dados
+    table = Table(data)
+
+    # Estilo da tabela
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ])
+
+    # Aplicar estilo à tabela
+    table.setStyle(style)
+
+    # Adicione a tabela ao documento PDF
+    elements = [table]
+
+
+    # Adicione o título ao documento PDF
+    title = 'Relatório de Doações Avulsas'
+    title_style = ParagraphStyle(name='Title', fontSize=16, alignment=1, spaceAfter=20)  # Adiciona espaço após o título
+    title_paragraph = Paragraph(title, title_style)
+    elements.insert(0, title_paragraph)
+
+    # Desenhe as imagens no cabeçalho do PDF
+    def draw_header(canvas, doc):
+        # Adicione as logos
+        logo_left_path = str(settings.STATIC_ROOT) + '/logo1.png'
+        logo_right_path = str(settings.STATIC_ROOT) + '/adote.jpg'
+
+        canvas.drawImage(logo_left_path, 50, height - 50 - 20, width=100, height=50, preserveAspectRatio=True)
+        canvas.drawImage(logo_right_path, width - 150, height - 50 - 20, width=100, height=50, preserveAspectRatio=True)
+    # Construa o PDF
+    pdf.build(elements, onFirstPage=draw_header)
 
     # Volte para o início do buffer antes de enviar a resposta
     buffer.seek(0)
@@ -511,7 +574,7 @@ def consulta_e_gera_pdf(request):
     response['Content-Disposition'] = 'inline; filename="relatorio_doacao_avulso.pdf"'
 
     # Envie o conteúdo do buffer como resposta
-    response.write(buffer.read())
+    response.write(buffer.getvalue())
     return response
 
 
@@ -532,7 +595,7 @@ def obter_doacoes_ultimos_meses():
         12: 'Dezembro',
     }
     # Obtém a data atual
-    data_atual = datetime.now()
+    data_atual = timezone.now()
 
     # Calcula a data há 6 meses atrás
     data_inicio = timezone.now() - timedelta(days=180)
@@ -604,7 +667,8 @@ class LoginView(APIView):
 
             #CASO NÃO ESTEJA UTILIZANDO O AUTOTOKEN DO DRF, PODE IMPLEMENTAR MANUALMENTE COM OUTRAS CONFIGURAÇÕES
             # Crie ou obtenha o token de autenticação
-            #token, created = Token.objects.get_or_create(user=user)
+            token, created = Token.objects.get_or_create(user=user)
+            print(token.key)
 
             # Retorne a resposta JSON com o token (ou qualquer outra informação necessária)
             return Response({'message': 'Autenticação bem-sucedida'}, status=status.HTTP_200_OK)
@@ -650,3 +714,64 @@ def api_listar_solicitacoes(request):
         serializer = SolicitacaoDoacaoSerializer(solicitacoes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response({'error': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@login_required
+@user_passes_test(is_member_of_team)
+def fazer_backup(request):
+    # Diretório de backup
+    backup_dir = '../backups/'
+
+    # Diretório do arquivo atual
+    current_dir = os.path.dirname(__file__)
+
+    # Caminho para o arquivo do banco de dados SQLite3
+    db_file = os.path.join(current_dir, '..', 'db.sqlite3')
+    # Limite de quantidade de backups
+    max_backups = 5
+
+    # Verifica se o arquivo do banco de dados existe
+    if os.path.exists(db_file):
+        # Cria o diretório de backup, se não existir
+        os.makedirs(backup_dir, exist_ok=True)
+        os.chmod(backup_dir, 0o777)
+
+        # Nome do arquivo de backup com timestamp
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        backup_filename = f'backup_{timestamp}.sqlite3'
+        backup_path = os.path.join(backup_dir, backup_filename)
+
+        # Copia o arquivo do banco de dados para o diretório de backup
+        def copy_and_set_permissions(src, dst):
+            # Copia o arquivo
+            shutil.copy2(src, dst)
+            os.chmod(dst, 0o777)
+
+        copy_and_set_permissions(db_file, backup_path)
+
+        # Verifica se o diretório de backup existe
+        if os.path.exists(backup_dir):
+            # Lista os arquivos no diretório de backup
+            backups = [os.path.join(backup_dir, file) for file in os.listdir(backup_dir)]
+            # Remove backups antigos se necessário
+            if len(backups) > max_backups:
+                # Ordena os backups pelo tempo de modificação (ou criação, se preferir)
+                backups = sorted(backups, key=os.path.getmtime)
+
+                # Verifica se os backups além do limite máximo são os mais antigos
+                oldest_backups = backups[:len(backups) - max_backups]
+                for old_backup in oldest_backups:
+                    print(old_backup)
+                    os.remove(old_backup)
+        else:
+            print(f'O diretório de backup "{backup_dir}" não existe.')
+
+
+        # Download do backup
+        with open(backup_path, 'rb') as backup_file:
+            response = HttpResponse(backup_file.read(), content_type='application/x-sqlite3')
+            response['Content-Disposition'] = f'attachment; filename="{backup_filename}"'
+            return response
+    else:
+        messages.error(request, 'Arquivo de banco de dados não encontrado.')
+        return redirect(request.META.get('HTTP_REFERER', 'index'))

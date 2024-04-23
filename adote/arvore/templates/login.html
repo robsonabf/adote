@@ -6,6 +6,7 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
+            {% if not user.is_authenticated %}
             <h2 class="text-center mb-4">Entrar</h2>
             <h6 class="text-center mb-4">Caso não possua cadastro, dirija-se para a página de cadastro.</h6>
             <form method="post">
@@ -20,6 +21,10 @@
                 </div>
                 <button type="submit" class="btn btn-success btn-block mb-4">Entrar</button>
             </form>
+            {% else %}
+            {% url 'index' as index_url %}
+            <p class="text-center">Você já está autenticado. <a href="{{ index_url }}">Ir para a página inicial</a></p>
+            {% endif %}
         </div>
     </div>
 </div>

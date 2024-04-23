@@ -4,6 +4,7 @@
 
 {% block content %}
   <div class="container mt-6">
+    {% if not user.is_authenticated %}
     <div class="row justify-content-center">
       <div class="col-md-6">
         <h2 class="text-center mb-1">Cadastro</h2>
@@ -45,5 +46,9 @@
         </form>
       </div>
     </div>
+    {% else %}
+            {% url 'index' as index_url %}
+            <p class="text-center">Você já está autenticado. <a href="{{ index_url }}">Ir para a página inicial</a></p>
+            {% endif %}
   </div>
 {% endblock %}

@@ -3,18 +3,74 @@
 {% block title %}Adote uma Árvore{% endblock %}
 
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4">Bem-vindo ao Sistema Replantar de Adoção de Mudas do programa Adote uma Árvore!</h1>
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    <p class="lead">Adote uma árvore e faça a diferença no meio ambiente!</p>
-    <hr class="my-4">
-    <p>Explore as opções abaixo para começar:</p>
-    <a class="btn btn-success btn-lg" href="{% url 'lista_mudas' %}" role="button">Ver Mudas Disponíveis</a>
+{% load static %}
+<div class="container-fluid pl-0 pr-0">
+    <div class="row">
+        <div class="col-md-6 ml-0 pl-0 mb-2">
+            <div class="jumbotron">
+                <h1 class="display-4">Bem-vindo ao Sistema Replantar de Adoção de Mudas do programa Adote uma Árvore!</h1>
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <div class="row">
+                    <div class="col-6">
+                <img class="d-block w-100" src="{% static 'adote.jpg' %}" class="mb-2 mt-2"
+                     alt="Logo" style="max-height: 303px; margin-right: auto; margin-left: auto;">
+                    </div>
+                    <div class="col-6">
+                        <p class="lead" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            Logo do Programa "Adote uma Árvore"!</p>
+                    </div>
+                </div>
+                <p class="lead mb-2">Adote uma árvore e faça a diferença no meio ambiente!</p>
+                <hr class="my-4">
+                <p>Explore a opção abaixo para começar:</p>
+                <a class="btn btn-success btn-lg" href="{% url 'lista_mudas' %}" role="button">Ver Mudas Disponíveis</a>
+            </div>
+        </div>
+        <div class="col-md-6 ml-0 pl-0 mb-2">
+            <div class="jumbotron">
+            <div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
+              <div class="carousel-inner">
+                <div class="carousel-item active">
+                 <a href="{% static '1.jpg' %}" data-lightbox="image" data-title="Imagem 1">
+                  <img src="{% static '1.jpg' %}" class="d-block w-100" alt="Professor Darley no Adote">
+                 </a>
+                </div>
+                <div class="carousel-item">
+                 <a href="{% static '2.jpg' %}" data-lightbox="image" data-title="Imagem 2">
+                  <img src="{% static '2.jpg' %}" class="d-block w-100" alt="Espaço físico do Adote.">
+                 </a>
+                </div>
+                <div class="carousel-item">
+                 <a href="{% static '3.jpg' %}" data-lightbox="image" data-title="Imagem 3">
+                  <img src="{% static '3.jpg' %}" class="d-block w-100" alt="Espaço físico do Adote.">
+                 </a>
+                </div>
+              </div>
+              <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="sr-only">Previous</span>
+              </a>
+              <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="sr-only">Next</span>
+              </a>
+            </div>
+                <hr class="my-4">
+                <p class="lead">Desde 2005, o programa "Adote uma Árvore" do IFPI - Campus Floriano tem desempenhado um
+                papel fundamental no incentivo ao reflorestamento, contribuindo para a preservação do meio ambiente e a
+                promoção da conscientização ambiental.</p>
+                <p class="lead mb-2">O Professor Dr. Darley Fiácrio, em parceria com o Sr. Jonas Calixto, são os visionários
+                por trás desse programa pioneiro, que se tornou amplamente reconhecido na região sob o nome de "Adote uma Árvore".
+                Desde sua criação, o projeto de extensão tem sido um exemplo inspirador de comprometimento com a sustentabilidade
+                e a preservação dos recursos naturais.</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

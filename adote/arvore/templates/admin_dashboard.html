@@ -21,7 +21,7 @@
         new Chart(ctxPorAno, {
             type: 'bar',
             data: {
-                labels: dados_estatisticos.por_ano.map(item => item.ano),
+                labels: dados_estatisticos.por_ano.map(item => `${item.ano} (${item.count})`), // Adiciona a contagem ao título do ano
                 datasets: [{
                     label: 'Quantidade de Doações Por Ano',
                     data: dados_estatisticos.por_ano.map(item => item.count),
@@ -33,18 +33,18 @@
         });
         // Gráfico Soma Por Ano
             new Chart(ctxSomaAno, {
-                type: 'bar',
-                data: {
-                    labels: dados_estatisticos.por_soma.map(item => item.ano),
-                    datasets: [{
-                        label: 'Quantidade de Mudas Doadas Por Ano',
-                        data: dados_estatisticos.por_soma.map(item => item.somatorio_especie || 0),  // Ajuste aqui
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1,
-                    }],
-                },
-            });
+            type: 'bar',
+            data: {
+                labels: dados_estatisticos.por_soma.map(item => `${item.ano} (${item.somatorio_especie || 0})`), // Adiciona a contagem ao título do ano
+                datasets: [{
+                    label: 'Quantidade de Mudas Doadas Por Ano',
+                    data: dados_estatisticos.por_soma.map(item => item.somatorio_especie || 0),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+        });
             console.log(dados_estatisticos.por_soma);
         // Gráfico Por Espécie
     new Chart(ctxPorEspecie, {
@@ -83,9 +83,9 @@
 });
             // Gráfico de Solicitações Status
             new Chart(ctx, {
-            type: 'pie',  // Use 'bar' para um gráfico de barras
+            type: 'pie',
             data: {
-                labels: dados_estatisticos.por_tipo_solicitacao.map(item => item.status),
+                labels: dados_estatisticos.por_tipo_solicitacao.map(item => `${item.status} (${item.count})`), // Adiciona a contagem ao título do status
                 datasets: [{
                     label: 'Quantidade de Mudas Solicitadas Por Tipo',
                     data: dados_estatisticos.por_tipo_solicitacao.map(item => item.count),
@@ -100,14 +100,14 @@
                         'rgba(255, 206, 86, 1)',
                     ],
                     borderWidth: 1,
-                    }],
-                },
-            });
+                }],
+            },
+        });
             // Gráfico de Solicitações de espécie
             new Chart(ctxespecieSolicita, {
-            type: 'bar',  // Use 'bar' para um gráfico de barras
+            type: 'bar',
             data: {
-                labels: dados_estatisticos.por_especie_solicitacao.map(item => item.especie),
+                labels: dados_estatisticos.por_especie_solicitacao.map(item => `${item.especie} (${item.count})`), // Adiciona a contagem ao título da espécie
                 datasets: [{
                     label: 'Quantidade de Mudas Solicitadas Por Tipo',
                     data: dados_estatisticos.por_especie_solicitacao.map(item => item.count),
@@ -122,10 +122,9 @@
                         'rgba(255, 206, 86, 1)',
                     ],
                     borderWidth: 1,
-                    }],
-                },
-            });
-
+                }],
+            },
+        });
             const meses = dadosDoacoesPorMes.map(item => item.mes);
             const valores = dadosDoacoesPorMes.map(item => item.count);
 
@@ -229,6 +228,9 @@
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'consulta_e_gera_pdf' %}">Imprimir relatório de Doações Avulsas</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'fazer_backup' %}">Criar ou Atualizar BackUp do Banco de Dados</a>
         </li>
     </ul>
     <!-- Adicione mais conteúdo conforme necessário -->

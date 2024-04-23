@@ -2,11 +2,15 @@
 <html lang="pt-br">
 <head>
     {% load custom_filters %}
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Adote uma Árvore{% endblock %}</title>
+    <title>{% block title %}Adote uma Muda{% endblock %}</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="icon" href="{% static 'logo1.png' %}" type="image/x-icon">
     <!-- Adicione aqui seu próprio arquivo de estilo com as cores desejadas -->
+    <link rel="stylesheet" href="{% static 'css/lightbox.css' %}">
+    <link rel="stylesheet" href="{% static 'css/lightbox.min.css' %}">
     <style>
         body {
             background-color: #f8f9fa; /* Tom de branco */
@@ -21,7 +25,13 @@
         .container {
             margin-top: 20px;
         }
-
+        .nav-link {
+            font-size: 130%;
+            font-weight: 400;
+        }
+        .navbar-brand {
+            font-size: 150%;
+        }
         .footer {
             background-color: #28a745; /* Tom de verde */
             color: white;
@@ -36,12 +46,31 @@
             border: none;
             border-radius: 4px;
         }
+        /* Estilos para telas menores que 768px */
+        @media (max-width: 768px) {
+            .container-fluid .jumbotron {
+                max-height: min-content; /* Por exemplo */
+            }
+        }
+
+        /* Estilos para telas maiores que 768px */
+        @media (min-width: 1200px) {
+            .container-fluid .col-md-6 .jumbotron {
+                max-height: 890px; /* Por exemplo */
+            }
+
+        @media (min-width: 769px) {
+            .container-fluid .col-md-6 .jumbotron {
+                max-height: min-content; /* Por exemplo */
+            }
+        }
     </style>
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-    <a class="navbar-brand" href="{% url 'index' %}">Adote uma Árvore</a>
+    <a class="navbar-brand" href="{% url 'index' %}"><img src="{% static 'logo1.png' %}"
+                                                          alt="Logo" style="max-height: 40px;"> Adote uma Muda</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -85,11 +114,11 @@
     </div>
 </nav>
 
-<div class="container">
+<div class="container pl-0 pr-0" style="max-width: 1250px;">
     {% if messages %}
     <ul class="messages">
     {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
     </ul>
     {% endif %}
@@ -97,13 +126,50 @@
 </div>
 
 <div class="footer">
-    <p>&copy; 2024 Sistema de Adoção de Mudas - Adote uma Árvore - Desenvolvido por Robson Almeida Borges de Freitas - Professor do IFPI - Floriano</p>
-</div>
+    <p>&copy; <span id="ano"></span> Sistema de Adoção de Mudas - Replantar - Desenvolvido por Robson Almeida Borges de Freitas -
+        Professor Doutor do IFPI - Floriano, robson.freitas@ifpi.edu.br</p>
+    <p>Instituto Federal de Educação, Ciência e Tecnologia do Piauí - Campus Floriano, Contato: (89) 3515-6400 </p>
+        <p>Endereço: R. Francisco Urquiza Machado, 462 - Meladão, Floriano - PI, 64800-000</p>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <img src="{% static 'logo2.png' %}" alt="Banner" class="img-fluid" style="max-height: 75%;
+                    min-width:90%; max-width:90%; min-height: 75%;">
+            </div>
+            <div class="col-md-4 mb-2">
+                <img src="{% static 'img_1.png' %}" alt="IFPI" class="img-fluid" style="background-color: white;
+                padding: 5px; min-width:90%; max-width:90%; min-height: 75%; max-height: 75%;">
+            </div>
 
+            <div class="col-md-4 mb-2">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.8452117513925!2d-43.0
+                4588152500472!3d-6.788682593208483!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7837cebfafe409
+                f%3A0x2a36e70db4e9a917!2sR.%20Francisco%20Urquiza%20Machado%2C%20462%20-%20Melad%C3%A3o!5e0!3m2!1s
+                pt-BR!2sbr!4v1713844632688!5m2!1spt-BR!2sbr" style="border:0; max-height: 75%;
+                    min-width:90%; max-width:90%; min-height: 75%;"
+                        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Obtém o elemento onde o ano será exibido
+    var anoElemento = document.getElementById("ano");
+
+    // Obtém o ano atual
+    var anoAtual = new Date().getFullYear();
+
+    // Define o ano atual no elemento
+    anoElemento.textContent = anoAtual;
+</script>
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/lightbox-plus-jquery.js' %}"></script>
+<script src="{% static 'js/lightbox-plus-jquery.min.js' %}"></script>
+<script src="{% static 'js/lightbox.js' %}"></script>
+<script src="{% static 'js/lightbox.min.js' %}"></script>
 
 
 </body>

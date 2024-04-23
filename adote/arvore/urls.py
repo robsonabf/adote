@@ -11,6 +11,7 @@ urlpatterns = [
     path('mudas/<int:muda_id>/', views.detalhes_muda, name='detalhes_muda'),
     path('mudas/<int:muda_id>/editar/', views.editar_muda, name='editar_muda'),
     path('mudas/<int:muda_id>/excluir/', views.excluir_muda, name='excluir_muda'),
+    #CADASTRO
     path('signup/', views.signup, name='signup'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('adicionar_muda/', views.adicionar_muda, name='adicionar_muda'),
@@ -25,6 +26,8 @@ urlpatterns = [
     path('doacoes/criar/', views.criar_doacao, name='criar_doacao'),
     path('pesquisar_adotantes/', views.pesquisar_adotantes, name='pesquisar_adotantes'),
     path('consulta_e_gera_pdf/', views.consulta_e_gera_pdf, name='consulta_e_gera_pdf'),
+    path('fazer_backup/', views.fazer_backup, name='fazer_backup'),
+    #ROTAS DA API REST
     path('api/login/', LoginView.as_view(), name='api_login'),
     path('api/token/', obtain_auth_token, name='api_token'),
     path('api/register/', RegisterView.as_view(), name='api_register'),
