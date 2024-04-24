@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Doações{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'criar_doacao' %}" class="btn btn-primary">Registrar Doação Avulso</a>
+  </div>
+
+<h2 class="mb-4">Lista de Doações Avulsas</h2>
+<a href="javascript:history.back()" class="btn btn-primary mb-1">Voltar</a>
+
+<div class="row">
+    <div class="col-md-8">
+        {% for doacao in doacoes %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h3 class="card-title">Doação: {{ doacao.nome_completo }}</h3>
+                    <ul class="list-group">
+                        {% for especie_quantidade in doacao.especiequantidade_set.all %}
+                            <li class="list-group-item">{{ especie_quantidade.especie }} - {{ especie_quantidade.quantidade }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'detalhes_doacao' doacao.pk %}" class="btn btn-info btn-sm">Detalhar</a>
+                    <a href="{% url 'alterar_doacao' doacao.pk %}" class="btn btn-warning btn-sm">Alterar</a>
+                    <a href="{% url 'excluir_doacao' doacao.pk %}" class="btn btn-danger btn-sm">Excluir</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="pagination mt-3">
+            <span class="step-links">
+                {% if doacoes.has_previous %}
+                    <a href="?page=1" class="btn btn-secondary btn-sm">&laquo; primeiro</a>
+                    <a href="?page={{ doacoes.previous_page_number }}" class="btn btn-secondary btn-sm">anterior</a>
+                {% endif %}
+
+                <span class="current">
+                    Página {{ doacoes.number }} de {{ doacoes.paginator.num_pages }}.
+                </span>
+
+                {% if doacoes.has_next %}
+                    <a href="?page={{ doacoes.next_page_number }}" class="btn btn-secondary btn-sm">próximo</a>
+                    <a href="?page={{ doacoes.paginator.num_pages }}" class="btn btn-secondary btn-sm">último &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
