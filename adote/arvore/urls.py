@@ -27,6 +27,7 @@ urlpatterns = [
     path('pesquisar_adotantes/', views.pesquisar_adotantes, name='pesquisar_adotantes'),
     path('consulta_e_gera_pdf/', views.consulta_e_gera_pdf, name='consulta_e_gera_pdf'),
     path('fazer_backup/', views.fazer_backup, name='fazer_backup'),
+    path('dados/', views.dados, name='dados'),
     #ROTAS DA API REST
     path('api/login/', LoginView.as_view(), name='api_login'),
     path('api/token/', obtain_auth_token, name='api_token'),

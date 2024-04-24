@@ -420,6 +420,14 @@ def minhas_solicitacoes(request):
 
 
 @login_required
+def dados(request):
+    dados_estatisticos = obter_dados_estatisticos()
+    lista_por_mes = obter_doacoes_ultimos_meses()
+    return render(request, 'dados.html',
+                  {'dados_estatisticos': dados_estatisticos, 'lista_mes': lista_por_mes['lista_por_mes']})
+
+
+@login_required
 @user_passes_test(is_member_of_team)
 def editar_muda(request, muda_id):
     muda = get_object_or_404(Muda, pk=muda_id)

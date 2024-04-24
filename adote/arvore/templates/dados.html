@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel Administrativo{% endblock %}
+
+{% block content %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dados_estatisticos = {{ dados_estatisticos|safe }};
+        var ctxDoacoesPorMes = document.getElementById('graficoDoacoesPorMes').getContext('2d');
+        var dadosDoacoesPorMes = {{ lista_mes|safe }};
+        const ctxPorAno = document.getElementById('graficoPorAno').getContext('2d');
+        const ctxPorEspecie = document.getElementById('graficoPorEspecie').getContext('2d');
+        const ctx = document.getElementById('graficoPorTipoSolicitacao').getContext('2d');
+        const ctxespecieSolicita = document.getElementById('graficoPorEspecieSolicitacao').getContext('2d');
+        const ctxSomaAno = document.getElementById('graficoSomaPorAno').getContext('2d');
+        var ctxmes = document.getElementById('graficoPorMes').getContext('2d');
+
+        console.log(dados_estatisticos);
+
+        // Gráfico Por Ano
+        new Chart(ctxPorAno, {
+            type: 'bar',
+            data: {
+                labels: dados_estatisticos.por_ano.map(item => `${item.ano} (${item.count})`), // Adiciona a contagem ao título do ano
+                datasets: [{
+                    label: 'Quantidade de Doações Por Ano',
+                    data: dados_estatisticos.por_ano.map(item => item.count),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+        });
+        // Gráfico Soma Por Ano
+            new Chart(ctxSomaAno, {
+            type: 'bar',
+            data: {
+                labels: dados_estatisticos.por_soma.map(item => `${item.ano} (${item.somatorio_especie || 0})`), // Adiciona a contagem ao título do ano
+                datasets: [{
+                    label: 'Quantidade de Mudas Doadas Por Ano',
+                    data: dados_estatisticos.por_soma.map(item => item.somatorio_especie || 0),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                }],
+            },
+        });
+            console.log(dados_estatisticos.por_soma);
+        // Gráfico Por Espécie
+    new Chart(ctxPorEspecie, {
+    type: 'pie',
+    data: {
+        labels: dados_estatisticos.por_especie.map(item => `${item.especie} (${item.quantidade + item.quantidade_efetivada})`),
+        datasets: [{
+            data: dados_estatisticos.por_especie.map(item => item.quantidade + item.quantidade_efetivada),
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)',
+                'rgba(221, 77, 171, 0.2)',
+                'rgba(127, 205, 205, 0.2)',
+                'rgba(255, 191, 0, 0.2)',
+                'rgba(0, 123, 255, 0.2)',
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(221, 77, 171, 1)',
+                'rgba(127, 205, 205, 1)',
+                'rgba(255, 191, 0, 1)',
+                'rgba(0, 123, 255, 1)',
+            ],
+            borderWidth: 1,
+        }],
+    },
+});
+            // Gráfico de Solicitações Status
+            new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: dados_estatisticos.por_tipo_solicitacao.map(item => `${item.status} (${item.count})`), // Adiciona a contagem ao título do status
+                datasets: [{
+                    label: 'Quantidade de Mudas Solicitadas Por Tipo',
+                    data: dados_estatisticos.por_tipo_solicitacao.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1,
+                }],
+            },
+        });
+            // Gráfico de Solicitações de espécie
+            new Chart(ctxespecieSolicita, {
+            type: 'bar',
+            data: {
+                labels: dados_estatisticos.por_especie_solicitacao.map(item => `${item.especie} (${item.count})`), // Adiciona a contagem ao título da espécie
+                datasets: [{
+                    label: 'Quantidade de Mudas Solicitadas Por Tipo',
+                    data: dados_estatisticos.por_especie_solicitacao.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1,
+                }],
+            },
+        });
+            const meses = dadosDoacoesPorMes.map(item => item.mes);
+            const valores = dadosDoacoesPorMes.map(item => item.count);
+
+    new Chart(ctxDoacoesPorMes, {
+        type: 'bar',
+        data: {
+            labels: meses.map((mes, index) => `${mes} (${valores[index]})`), // Adiciona os valores ao lado do mês
+            datasets: [{
+                label: 'Quantidade de Doações nos Últimos 6 Meses',
+                data: valores,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                },
+            },
+        },
+    });
+    //proximo
+            const contagens = dadosDoacoesPorMes.map(item => item.somatorio);
+            const dataSomatorio = dadosDoacoesPorMes.map(item => item.somatorio);
+            const meses2 = dadosDoacoesPorMes.map(item => item.mes);
+            const labels = meses2.map((mes, index) => `${mes} (${contagens[index]})`);
+
+
+            new Chart(ctxmes, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Somatório de Mudas Doadas nos Últimos 6 Meses',
+                            data: dataSomatorio,
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+    });
+</script>
+<style>
+    .nav {
+        display: flex;
+        background-color: #343a40; /* Cor de fundo do menu */
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .nav-item {
+        margin-right: 10px;
+    }
+
+    .nav-link {
+        color: #fff; /* Cor do texto */
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: 3px;
+        transition: background-color 0.3s;
+    }
+
+    .nav-link:hover {
+        background-color: #555; /* Cor de fundo ao passar o mouse */
+        color: #fff
+    }
+
+    .bg-dark {
+        background-color: #343a40 !important; /* Cor de fundo dos itens do menu */
+    }
+
+</style>
+  <div class="container mt-5">
+    <h2>Dados Simplificados</h2>
+    <p>Bem-vindo ao Painel de Dados! Aqui você  encontra detalhes da abrangência do Programa.
+        Para mais dados, entre em contato com a nossa equipe!</p>
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <h3>Quantidade de Mudas Doadas Por Tipo</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorEspecie" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Quantidade de Doações Por Ano</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorAno" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Somatório de Mudas Doadas Por Ano</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoSomaPorAno" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Quantidade das Solicitações de Mudas Por Situação</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorTipoSolicitacao" width="400" height="400"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h3>Quantidade de Solicitações de Mudas Por Tipo</h3>
+        <!-- Adicione uma tabela, gráfico ou informações relevantes -->
+          <canvas id="graficoPorEspecieSolicitacao" width="400" height="400"></canvas>
+      </div>
+        <div class="col-md-6">
+        <h3>Doações realizados nos 6 últimos meses</h3>
+        <canvas id="graficoDoacoesPorMes" width="400" height="400"></canvas>
+        </div>
+        <div class="col-md-6">
+        <h3>Doações realizados nos 6 últimos meses</h3>
+        <canvas id="graficoPorMes" width="400" height="400"></canvas>
+        </div>
+    </div>
+  </div>
+{% endblock %}
