@@ -769,7 +769,6 @@ def fazer_backup(request):
                 # Verifica se os backups além do limite máximo são os mais antigos
                 oldest_backups = backups[:len(backups) - max_backups]
                 for old_backup in oldest_backups:
-                    print(old_backup)
                     os.remove(old_backup)
         else:
             print(f'O diretório de backup "{backup_dir}" não existe.')
@@ -783,3 +782,68 @@ def fazer_backup(request):
     else:
         messages.error(request, 'Arquivo de banco de dados não encontrado.')
         return redirect(request.META.get('HTTP_REFERER', 'index'))
+
+
+"""@login_required
+@user_passes_test(is_member_of_team)
+def fazer_backup(request):
+    # Diretório do arquivo atual
+    current_dir = os.path.dirname(__file__)
+    # Diretório de backup
+    backup_dir = os.path.join(current_dir, '..', '..', 'backups')
+    # Caminho para o arquivo do banco de dados SQLite3
+    db_file = os.path.join(current_dir, '..', 'db.sqlite3')
+    # Limite de quantidade de backups
+    max_backups = 5
+
+    # Verifica se o arquivo do banco de dados existe
+    if os.path.exists(db_file):
+        # Cria o diretório de backup, se não existir
+        os.makedirs(backup_dir, exist_ok=True)
+        os.chmod(backup_dir, 0o777)
+
+        # Nome do arquivo de backup com timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        backup_filename = f'backup_{timestamp}.sqlite3'
+        backup_path = os.path.join(backup_dir, backup_filename)
+
+        # Copia o arquivo do banco de dados para o diretório de backup
+        def copy_and_set_permissions(src, dst):
+            # Copia o arquivo
+            shutil.copy2(src, dst)
+            os.chmod(dst, 0o777)
+
+        copy_and_set_permissions(db_file, backup_path)
+
+        # Verifica se o diretório de backup existe
+        if os.path.exists(backup_dir):
+            # Lista os arquivos no diretório de backup
+            backups = [os.path.join(backup_dir, file) for file in os.listdir(backup_dir)]
+            # Define uma função para extrair a data e hora do nome do arquivo
+            def get_backup_datetime(backup_path):
+                # Extrai a parte do nome do arquivo que contém a data e hora
+                filename = os.path.basename(backup_path)
+                arquivo_semextensao = filename.split('.')[0]
+                # Dividir o nome do arquivo pelo caractere '_'
+                timestamp_str = '_'.join(arquivo_semextensao.split('_')[1:])
+                return datetime.strptime(timestamp_str, '%Y-%m-%d_%H-%M-%S')
+            # Ordena os backups com base na data e hora no nome do arquivo
+            backups_sorted = sorted(backups, key=get_backup_datetime)
+            # Remove os backups mais antigos se houver mais do que o limite máximo
+            if len(backups_sorted) > max_backups:
+                oldest_backups = backups_sorted[:len(backups_sorted) - max_backups]
+                for old_backup in oldest_backups:
+                    os.remove(old_backup)
+        else:
+            print(f'O diretório de backup "{backup_dir}" não existe.')
+
+
+        # Download do backup
+        with open(backup_path, 'rb') as backup_file:
+            response = HttpResponse(backup_file.read(), content_type='application/x-sqlite3')
+            response['Content-Disposition'] = f'attachment; filename="{backup_filename}"'
+            return response
+    else:
+        messages.error(request, 'Arquivo de banco de dados não encontrado.')
+        return redirect(request.META.get('HTTP_REFERER', 'index'))
+    """

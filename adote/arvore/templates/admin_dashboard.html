@@ -230,10 +230,30 @@
             <a class="nav-link" href="{% url 'consulta_e_gera_pdf' %}">Imprimir relatório de Doações Avulsas</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'fazer_backup' %}">Criar ou Atualizar BackUp do Banco de Dados</a>
+            <a class="nav-link" href="#" onclick="aviso()">Criar ou Atualizar BackUp do Banco de Dados</a>
         </li>
     </ul>
-    <!-- Adicione mais conteúdo conforme necessário -->
+    <!-- Modal de Aviso de BackUp -->
+      <div class="modal fade" id="avisoModal" tabindex="-1" role="dialog" aria-labelledby="avisoModalLabel" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="avisoModalLabel">Confirmação</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Tem certeza de que deseja criar ou atualizar o backup do banco de dados? Certifique-se de realizar a operação
+              em momentos de baixa utiização do sistema para facilitar a criação em caso de banco de dados maiores.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <a class="btn btn-primary" id="confirmarBackup">Confirmar</a>
+          </div>
+        </div>
+       </div>
+      </div>
 
     <div class="row mt-4">
       <div class="col-md-6">
