@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!qurk%*^bfd%w5n81q-rjk6=fw3^@chtt#p3!%t^+lc)=yj$-9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -146,3 +146,11 @@ LOCALE_PATHS = [
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+# Redireciona todas as solicitações HTTP para HTTPS
+"""SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True"""
