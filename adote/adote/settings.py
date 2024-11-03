@@ -152,4 +152,8 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8100",
+    "https://robsonabfreitas.pythonanywhere.com",
+    # Outros domínios, se necessário
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
