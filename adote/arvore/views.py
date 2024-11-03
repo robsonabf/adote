@@ -21,7 +21,7 @@ from django.db.models import Count, Sum, Subquery, OuterRef
 from django.db.models.functions import ExtractYear, ExtractMonth
 from .models import DoacaoAvulso
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
@@ -29,7 +29,7 @@ from rest_framework import status, permissions
 import io
 from django.conf import settings
 #API
-from .serializers import UserSerializer, UserProfileSerializer, SolicitacaoDoacaoSerializer
+from .serializers import UserSerializer, UserProfileSerializer, SolicitacaoDoacaoSerializer, MudaSerializer
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -679,7 +679,10 @@ class LoginView(APIView):
             print(token.key)
 
             # Retorne a resposta JSON com o token (ou qualquer outra informação necessária)
-            return Response({'message': 'Autenticação bem-sucedida'}, status=status.HTTP_200_OK)
+            return Response({
+                'message': 'Autenticação bem-sucedida',
+                'token': token.key
+            }, status=status.HTTP_200_OK)
         else:
             # Caso as credenciais sejam inválidas
             return Response({'error': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -688,22 +691,27 @@ class LoginView(APIView):
 class RegisterView(APIView):
     def post(self, request):
         user_serializer = UserSerializer(data=request.data)
-        profile_serializer = UserProfileSerializer(data=request.data.get('profile', {}))
-        try:
-            if user_serializer.is_valid() and profile_serializer.is_valid():
-                user = user_serializer.save()
-                # Crie um token para o usuário recém-registrado (opcional)
-                Token.objects.create(user=user)
 
-                return Response({'message': 'Registro bem-sucedido'}, status=status.HTTP_201_CREATED)
+        try:
+            if user_serializer.is_valid():
+                user = user_serializer.save()
+
+                token, created = Token.objects.get_or_create(user=user)
+
+                return Response({
+                    'message': 'Registro bem-sucedido',
+                    'token': token.key
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
-            # Em caso de violação de unicidade (UserProfile duplicado), emita uma mensagem
             message = f"Erro ao registrar usuário: {e}"
             return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({'error': 'Falha no registro'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+@permission_classes([IsAuthenticated])
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -784,66 +792,45 @@ def fazer_backup(request):
         return redirect(request.META.get('HTTP_REFERER', 'index'))
 
 
-"""@login_required
-@user_passes_test(is_member_of_team)
-def fazer_backup(request):
-    # Diretório do arquivo atual
-    current_dir = os.path.dirname(__file__)
-    # Diretório de backup
-    backup_dir = os.path.join(current_dir, '..', '..', 'backups')
-    # Caminho para o arquivo do banco de dados SQLite3
-    db_file = os.path.join(current_dir, '..', 'db.sqlite3')
-    # Limite de quantidade de backups
-    max_backups = 5
+class MudaListView(APIView):
+    permission_classes = [permissions.AllowAny]
 
-    # Verifica se o arquivo do banco de dados existe
-    if os.path.exists(db_file):
-        # Cria o diretório de backup, se não existir
-        os.makedirs(backup_dir, exist_ok=True)
-        os.chmod(backup_dir, 0o777)
-
-        # Nome do arquivo de backup com timestamp
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        backup_filename = f'backup_{timestamp}.sqlite3'
-        backup_path = os.path.join(backup_dir, backup_filename)
-
-        # Copia o arquivo do banco de dados para o diretório de backup
-        def copy_and_set_permissions(src, dst):
-            # Copia o arquivo
-            shutil.copy2(src, dst)
-            os.chmod(dst, 0o777)
-
-        copy_and_set_permissions(db_file, backup_path)
-
-        # Verifica se o diretório de backup existe
-        if os.path.exists(backup_dir):
-            # Lista os arquivos no diretório de backup
-            backups = [os.path.join(backup_dir, file) for file in os.listdir(backup_dir)]
-            # Define uma função para extrair a data e hora do nome do arquivo
-            def get_backup_datetime(backup_path):
-                # Extrai a parte do nome do arquivo que contém a data e hora
-                filename = os.path.basename(backup_path)
-                arquivo_semextensao = filename.split('.')[0]
-                # Dividir o nome do arquivo pelo caractere '_'
-                timestamp_str = '_'.join(arquivo_semextensao.split('_')[1:])
-                return datetime.strptime(timestamp_str, '%Y-%m-%d_%H-%M-%S')
-            # Ordena os backups com base na data e hora no nome do arquivo
-            backups_sorted = sorted(backups, key=get_backup_datetime)
-            # Remove os backups mais antigos se houver mais do que o limite máximo
-            if len(backups_sorted) > max_backups:
-                oldest_backups = backups_sorted[:len(backups_sorted) - max_backups]
-                for old_backup in oldest_backups:
-                    os.remove(old_backup)
-        else:
-            print(f'O diretório de backup "{backup_dir}" não existe.')
+    def get(self, request):
+        mudas = Muda.objects.all()
+        serializer = MudaSerializer(mudas, many=True)
+        return Response(serializer.data)
 
 
-        # Download do backup
-        with open(backup_path, 'rb') as backup_file:
-            response = HttpResponse(backup_file.read(), content_type='application/x-sqlite3')
-            response['Content-Disposition'] = f'attachment; filename="{backup_filename}"'
-            return response
-    else:
-        messages.error(request, 'Arquivo de banco de dados não encontrado.')
-        return redirect(request.META.get('HTTP_REFERER', 'index'))
-    """
+class SolicitarDoacaoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = SolicitacaoDoacaoSerializer(data=request.data)
+        if serializer.is_valid():
+            # Cria a solicitação de doação com o usuário e a data da solicitação
+            solicitacao = serializer.save(usuario=request.user, data_solicitacao=timezone.now())
+            return Response({
+                'message': 'Solicitação de doação realizada com sucesso!',
+                'data': {
+                    'id': solicitacao.id,
+                    'usuario': solicitacao.usuario.username,
+                    'especie': solicitacao.especie,
+                    'quantidade_solicitada': solicitacao.quantidade_solicitada,
+                    'local_de_plantio': solicitacao.local_de_plantio,
+                    'status': solicitacao.status,
+                    'data_solicitacao': solicitacao.data_solicitacao,
+                    'observacoes': solicitacao.observacoes
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([IsAuthenticated])
+def api_dados_estatisticos(request):
+    dados_estatisticos = obter_dados_estatisticos()
+    lista_por_mes = obter_doacoes_ultimos_meses()
+    response_data = {
+        'dados_estatisticos': dados_estatisticos,
+        'lista_mes': lista_por_mes['lista_por_mes']
+    }
+    return JsonResponse(response_data)

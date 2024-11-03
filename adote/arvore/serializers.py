@@ -1,7 +1,7 @@
 # serializers.py
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import SolicitacaoDoacao, UserProfile
+from .models import SolicitacaoDoacao, UserProfile, Muda
 from django.db import IntegrityError
 
 
@@ -68,3 +68,15 @@ class SolicitacaoDoacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = SolicitacaoDoacao
         fields = ['id', 'especie', 'quantidade_solicitada', 'status', 'local_de_plantio', 'data_solicitacao', 'observacoes']
+
+
+class MudaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Muda
+        fields = '__all__'
+
+
+class SolicitacaoDoacaoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SolicitacaoDoacao
+        fields = ['especie', 'quantidade_solicitada', 'local_de_plantio', 'observacoes']

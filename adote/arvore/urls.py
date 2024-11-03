@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import RegisterView, LoginView, LogoutView
+from .views import RegisterView, LoginView, LogoutView, MudaListView, SolicitarDoacaoView, api_dados_estatisticos
 from rest_framework.authtoken.views import obtain_auth_token
 from .views import api_listar_solicitacoes
 
@@ -34,4 +34,7 @@ urlpatterns = [
     path('api/register/', RegisterView.as_view(), name='api_register'),
     path('api/logout/', LogoutView.as_view(), name='api_logout'),
     path('api/listar_solicitacoes/', api_listar_solicitacoes, name='api_listar_solicitacoes'),
+    path('api/mudas/', MudaListView.as_view(), name='lista_mudas'),
+    path('api/solicitar-doacao/', SolicitarDoacaoView.as_view(), name='solicitar_doacao'),
+    path('api/dados-estatisticos/', api_dados_estatisticos, name='api_dados_estatisticos'),
 ]
