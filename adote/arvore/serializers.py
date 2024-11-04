@@ -68,6 +68,12 @@ class SolicitacaoDoacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = SolicitacaoDoacao
         fields = ['id', 'especie', 'quantidade_solicitada', 'status', 'local_de_plantio', 'data_solicitacao', 'observacoes']
+        read_only_fields = ['status', 'data_solicitacao']
+
+    def validate_quantidade_solicitada(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("A quantidade solicitada deve ser maior que zero.")
+        return value
 
 
 class MudaSerializer(serializers.ModelSerializer):

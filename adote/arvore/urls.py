@@ -34,7 +34,8 @@ urlpatterns = [
     path('api/register/', RegisterView.as_view(), name='api_register'),
     path('api/logout/', LogoutView.as_view(), name='api_logout'),
     path('api/listar_solicitacoes/', api_listar_solicitacoes, name='api_listar_solicitacoes'),
-    path('api/mudas/', MudaListView.as_view(), name='lista_mudas'),
-    path('api/solicitar-doacao/', SolicitarDoacaoView.as_view(), name='solicitar_doacao'),
+    path('api/mudas/', MudaListView.as_view(), name='api_lista_mudas'),
+    path('api/solicitar-doacao/', SolicitarDoacaoView.as_view(), name='api_solicitar_doacao'),
     path('api/dados-estatisticos/', api_dados_estatisticos, name='api_dados_estatisticos'),
+    path('api/solicitacao/<int:pk>/', SolicitarDoacaoView.as_view(), name='solicitacao-detail'),
 ]

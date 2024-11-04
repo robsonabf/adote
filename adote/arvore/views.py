@@ -824,6 +824,37 @@ class SolicitarDoacaoView(APIView):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            solicitacao = SolicitacaoDoacao.objects.get(pk=pk, usuario=request.user)
+
+            if solicitacao.status != 'Pendente':
+                return Response({'error': 'Apenas solicitações pendentes podem ser editadas.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = SolicitacaoDoacaoSerializer(solicitacao, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except SolicitacaoDoacao.DoesNotExist:
+            return Response({'error': 'Solicitação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk, *args, **kwargs):
+        try:
+            solicitacao = SolicitacaoDoacao.objects.get(pk=pk, usuario=request.user)
+
+            if solicitacao.status != 'Pendente':
+                return Response({'error': 'Apenas solicitações pendentes podem ser excluídas.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            solicitacao.delete()
+            return Response({'message': 'Solicitação excluída com sucesso.'}, status=status.HTTP_204_NO_CONTENT)
+
+        except SolicitacaoDoacao.DoesNotExist:
+            return Response({'error': 'Solicitação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
 
 @permission_classes([IsAuthenticated])
 def api_dados_estatisticos(request):
