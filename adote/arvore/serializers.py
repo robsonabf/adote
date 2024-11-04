@@ -74,9 +74,3 @@ class MudaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Muda
         fields = '__all__'
-
-
-class SolicitacaoDoacaoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SolicitacaoDoacao
-        fields = ['especie', 'quantidade_solicitada', 'local_de_plantio', 'observacoes']
